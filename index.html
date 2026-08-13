@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rust N Repair | Garage & Restauration Auto</title>
+    <style>
+        :root {
+            --bg-dark: #0e0e11;
+            --bg-card: #18181c;
+            --bg-hover: #222228;
+            --primary: #d9534f;
+            --primary-hover: #c9302c;
+            --accent-green: #28a745;
+            --accent-yellow: #ffc107;
+            --text-light: #f5f5f7;
+            --text-muted: #9a9a9e;
+            --border-color: #2a2a32;
+            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: var(--font-family); }
+        body { background-color: var(--bg-dark); color: var(--text-light); min-height: 100vh; display: flex; flex-direction: column; }
+
+        /* Banner Admin */
+        .admin-banner {
+            display: none; background-color: var(--accent-yellow); color: #000;
+            padding: 0.5rem 1rem; text-align: center; font-weight: bold; font-size: 0.85rem;
+        }
+
+        body.admin-mode [contenteditable="true"] {
+            outline: 2px dashed var(--accent-yellow);
+            padding: 2px 4px; border-radius: 4px;
+            background-color: rgba(255, 193, 7, 0.05);
+        }
+
+        /* Header */
+        header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 1rem 1.5rem; background-color: rgba(14, 14, 17, 0.95);
+            backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 100;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .header-left { display: flex; align-items: center; gap: 1rem; }
+        .menu-toggle { background: none; border: none; cursor: pointer; display: flex; flex-direction: column; gap: 5px; }
+        .menu-toggle span { display: block; width: 22px; height: 2px; background-color: var(--text-light); border-radius: 2px; }
+
+        .brand-title { font-size: 1.2rem; font-weight: 800; text-transform: uppercase; color: var(--text-light); letter-spacing: 1px; }
+        .brand-title span.accent { color: var(--primary); }
+
+        .role-badge { display: none; padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.75rem; font-weight: bold; margin-left: 0.5rem; }
+        .role-badge.badge-pro { background-color: rgba(40, 167, 69, 0.2); color: var(--accent-green); border: 1px solid var(--accent-green); }
+        .role-badge.badge-patron { background-color: rgba(255, 193, 7, 0.2); color: var(--accent-yellow); border: 1px solid var(--accent-yellow); }
+
+        .user-btn { background: none; border: 1px solid var(--border-color); color: var(--text-light); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .user-btn.logged-in { border-color: var(--accent-green); color: var(--accent-green); }
+
+        /* Sidebar Overlay & Menu */
+        .sidebar-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.7); opacity: 0; visibility: hidden; transition: 0.3s; z-index: 200; }
+        .sidebar-overlay.active { opacity: 1; visibility: visible; }
+        .sidebar { position: fixed; top: 0; left: -280px; width: 280px; height: 100vh; background-color: var(--bg-card); border-right: 1px solid var(--border-color); z-index: 201; transition: left 0.3s ease; display: flex; flex-direction: column; padding: 1.5rem; }
+        .sidebar.active { left: 0; }
+        .sidebar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; }
+        .nav-list { list-style: none; display: flex; flex-direction: column; gap: 0.5rem; }
+        .nav-item a { display: flex; align-items: center; gap: 0.75rem; padding: 0.85rem 1rem; color: var(--text-light); text-decoration: none; border-radius: 8px; font-weight: 500; }
+        .nav-item.active a { background-color: var(--bg-hover); color: var(--primary); }
+
+        /* Content Layout */
+        main { flex: 1; max-width: 900px; width: 100%; margin: 0 auto; padding: 1.5rem; }
+        .page-section { display: none; }
+        .page-section.active { display: block; }
+
+        .hero-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; position: relative; }
+        .hero-badge { background: var(--primary); color: white; padding: 0.2rem 0.6rem; border-radius: 6px; font-size: 0.75rem; font-weight: bold; display: inline-block; margin-bottom: 0.5rem; }
+
+        .grid-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; margin-top: 1rem; }
+        .card { background-color: var(--bg-card); border: 1px solid var(--border-color); padding: 1.25rem; border-radius: 12px; position: relative; }
+        .card h3 { color: var(--primary); margin-bottom: 0.5rem; }
+        .price-tag { font-size: 1.3rem; font-weight: bold; margin-top: 0.5rem; color: var(--accent-green); }
+
+        /* Forms & Panels */
+        .panel { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; margin-top: 1.5rem; }
+        .form-group { margin-bottom: 1.2rem; }
+        .form-group label { display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.4rem; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 0.75rem; background-color: var(--bg-dark); border: 1px solid var(--border-color); border-radius: 8px; color: white; }
+        .btn { display: inline-block; width: 100%; padding: 0.85rem; background-color: var(--primary); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; text-align: center; }
+        .btn-secondary { background-color: var(--bg-hover); color: var(--text-light); border: 1px solid var(--border-color); }
+
+        /* Sellers List (Style Caracas Motors) */
+        .sellers-list { list-style: none; margin-top: 1rem; }
+        .seller-item { display: flex; justify-content: space-between; align-items: center; background: var(--bg-dark); border: 1px solid var(--border-color); padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 0.5rem; }
+        .seller-grade { font-size: 0.75rem; padding: 0.2rem 0.5rem; border-radius: 4px; background: var(--bg-hover); color: var(--accent-yellow); font-weight: bold; }
+
+        /* Gallery Grid */
+        .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; margin-top: 1rem; }
+        .gallery-item { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; overflow: hidden; }
+        .gallery-item img { width: 100%; height: 160px; object-fit: cover; display: block; }
+        .gallery-item-info { padding: 0.75rem; }
+
+        /* Modal */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; opacity: 0; visibility: hidden; transition: all 0.3s ease; z-index: 300; padding: 1rem; }
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+        .modal-card { background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; width: 100%; max-width: 420px; padding: 2rem; position: relative; }
+        .close-modal-btn { position: absolute; top: 1rem; right: 1rem; background: none; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <div class="admin-banner" id="adminBanner">👑 Mode Administration Patron Activé — Cliquez directement sur les éléments pour éditer</div>
+
+    <header>
+        <div class="header-left">
+            <button class="menu-toggle" id="openMenuBtn"><span></span><span></span><span></span></button>
+            <div class="brand-title">Rust <span class="accent">N</span> Repair <span class="role-badge" id="roleBadge">PRO</span></div>
+        </div>
+        <button class="user-btn" id="userBtn" title="Espace Pro / Connexion">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+        </button>
+    </header>
+
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h3>Sommaire</h3>
+            <button class="close-modal-btn" id="closeMenuBtn">&times;</button>
+        </div>
+        <ul class="nav-list">
+            <li class="nav-item active" data-page="accueil"><a href="#accueil">🏠 Accueil</a></li>
+            <li class="nav-item" data-page="photos"><a href="#photos">📷 Photos</a></li>
+            <li class="nav-item" data-page="tarifs"><a href="#tarifs">🏷️ Tarifs</a></li>
+            <li class="nav-item" data-page="fidelite"><a href="#fidelite">⭐ Fidélité</a></li>
+            <li class="nav-item" data-page="staff" id="staffNavItem" style="display: none;"><a href="#staff">👥 Espace Equipe & Admin</a></li>
+        </ul>
+    </aside>
+
+    <main>
+        <!-- ACCUEIL -->
+        <section id="accueil" class="page-section active">
+            <div class="hero-card">
+                <span class="hero-badge">Offre du moment</span>
+                <h1 id="homeTitle" class="editable">Bienvenue chez Rust N Repair</h1>
+                <p id="homeDesc" class="editable" style="margin-top: 0.5rem;">Spécialiste de la réparation, restauration et préparation automobile haut de gamme.</p>
+            </div>
+        </section>
+
+        <!-- PHOTOS -->
+        <section id="photos" class="page-section">
+            <h2>Galerie Réalisations</h2>
+            <p style="margin-bottom: 1rem;">Découvrez nos derniers travaux en atelier.</p>
+            
+            <div class="panel" id="photoUploadPanel" style="display: none;">
+                <h3>➕ Publier une nouvelle réalisation (Espace Pro)</h3>
+                <form id="photoForm" style="margin-top: 1rem;">
+                    <div class="form-group">
+                        <label>Adresse URL de la photo *</label>
+                        <input type="text" id="photoUrl" placeholder="https://..." required>
+                    </div>
+                    <div class="form-group">
+                        <label>Titre / Description *</label>
+                        <input type="text" id="photoTitle" placeholder="Ex. Restauration Moteur V8" required>
+                    </div>
+                    <button type="submit" class="btn">Publier la photo</button>
+                </form>
+            </div>
+
+            <div class="gallery-grid" id="galleryGrid"></div>
+        </section>
+
+        <!-- TARIFS -->
+        <section id="tarifs" class="page-section">
+            <h2>Prestations & Tarifs</h2>
+            <div class="grid-cards" id="tarifsGrid"></div>
+            <button class="btn btn-secondary" id="addTarifBtn" style="display:none; margin-top: 1rem;">➕ Ajouter un tarif</button>
+        </section>
+
+        <!-- FIDELITE -->
+        <section id="fidelite" class="page-section">
+            <h2>Programme Fidélité</h2>
+            <div class="grid-cards" id="fideliteGrid"></div>
+            <button class="btn btn-secondary" id="addFideliteBtn" style="display:none; margin-top: 1rem;">➕ Ajouter une offre fidélité</button>
+        </section>
+
+        <!-- ESPACE STAFF & ADMIN (Inspiré de Caracas Motors) -->
+        <section id="staff" class="page-section">
+            <div class="panel">
+                <h2>Espace Équipe & Administration</h2>
+                <p>Gestion interne des accès et rôles des employés du garage.</p>
+            </div>
+
+            <!-- Espace Admin Patron (Création de compte) -->
+            <div class="panel" id="adminCreatePanel" style="display: none; margin-top: 1rem;">
+                <h3>👑 Créer un compte Employé (Accès Patron)</h3>
+                <form id="createAccountForm" style="margin-top: 1rem;">
+                    <div class="form-group">
+                        <label>Identifiant *</label>
+                        <input type="text" id="newIdentifiant" placeholder="ex: mecanicien2" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Mot de passe *</label>
+                        <input type="password" id="newPassword" placeholder="••••••••" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Nom affiché *</label>
+                        <input type="text" id="newNom" placeholder="Nom de l'employé" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Grade / Rôle *</label>
+                        <select id="newGrade" required>
+                            <option value="co-patron">Co-patron</option>
+                            <option value="manager">Manager</option>
+                            <option value="mecanicien" selected>Mécanicien</option>
+                            <option value="apprenti">Apprenti</option>
+                            <option value="stagiaire">Stagiaire</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn">Créer l'accès employé</button>
+                </form>
+
+                <div style="margin-top: 2rem;">
+                    <h3>Comptes enregistrés</h3>
+                    <ul class="sellers-list" id="accountsList"></ul>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modal Connexion -->
+    <div class="modal-overlay" id="loginModal">
+        <div class="modal-card">
+            <button class="close-modal-btn" id="closeModalBtn">&times;</button>
+            <h2 id="modalTitle">Espace Pro & Connexion</h2>
+            <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">Accès réservé au personnel du garage Rust N Repair.</p>
+            
+            <form id="loginForm">
+                <div class="form-group">
+                    <label>Identifiant</label>
+                    <input type="text" id="loginIdentifiant" required placeholder="votre identifiant">
+                </div>
+                <div class="form-group">
+                    <label>Mot de passe</label>
+                    <input type="password" id="loginPassword" required placeholder="••••••••">
+                </div>
+                <button type="submit" class="btn">Se connecter</button>
+                <p id="loginMsg" style="color: var(--primary); font-size: 0.85rem; margin-top: 0.5rem; text-align: center;"></p>
+            </form>
+
+            <div id="logoutSection" style="display: none; text-align: center;">
+                <p id="connectedUserText" style="margin-bottom: 1rem; font-weight: bold;"></p>
+                <button class="btn btn-secondary" id="logoutBtn">Se déconnecter</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Données Comptes (Identifiants préconfigurés)
+        let accounts = JSON.parse(localStorage.getItem('rust_accounts')) || [
+            { id: "patron", pass: "garage2026", nom: "Le Patron", grade: "patron", role: "patron" },
+            { id: "mecanicien1", pass: "rust123", nom: "Mécano 1", grade: "mecanicien", role: "pro" }
+        ];
+
+        let currentUser = null;
+
+        // Données du Site
+        let siteData = JSON.parse(localStorage.getItem('rust_data')) || {
+            homeTitle: "Bienvenue chez Rust N Repair",
+            homeDesc: "Spécialiste de la réparation, restauration et préparation automobile haut de gamme.",
+            tarifs: [
+                { title: "Diagnostic Électronique", desc: "Analyse calculateurs & recherche de pannes", price: "49 €" },
+                { title: "Vidange & Entretien", desc: "Huile haute performance et remplacement des filtres", price: "89 €" }
+            ],
+            fidelite: [
+                { title: "Pass Club Rust N Repair", desc: "100€ dépensés = 10€ offerts sur la prochaine révision" }
+            ],
+            photos: [
+                { url: "https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=500", title: "Restauration Moteur V8" }
+            ]
+        };
+
+        function saveData() {
+            localStorage.setItem('rust_data', JSON.stringify(siteData));
+            localStorage.setItem('rust_accounts', JSON.stringify(accounts));
+        }
+
+        function renderSite() {
+            document.getElementById('homeTitle').innerText = siteData.homeTitle;
+            document.getElementById('homeDesc').innerText = siteData.homeDesc;
+
+            // Tarifs
+            document.getElementById('tarifsGrid').innerHTML = siteData.tarifs.map((item, idx) => `
+                <div class="card">
+                    <h3 class="editable" data-type="tarifs" data-field="title" data-idx="${idx}">${item.title}</h3>
+                    <p class="editable" data-type="tarifs" data-field="desc" data-idx="${idx}">${item.desc}</p>
+                    <div class="price-tag editable" data-type="tarifs" data-field="price" data-idx="${idx}">${item.price}</div>
+                </div>
+            `).join('');
+
+            // Fidélité
+            document.getElementById('fideliteGrid').innerHTML = siteData.fidelite.map((item, idx) => `
+                <div class="card">
+                    <h3 class="editable" data-type="fidelite" data-field="title" data-idx="${idx}">${item.title}</h3>
+                    <p class="editable" data-type="fidelite" data-field="desc" data-idx="${idx}">${item.desc}</p>
+                </div>
+            `).join('');
+
+            // Galerie Photos
+            document.getElementById('galleryGrid').innerHTML = siteData.photos.map(p => `
+                <div class="gallery-item">
+                    <img src="${p.url}" alt="${p.title}">
+                    <div class="gallery-item-info"><p><strong>${p.title}</strong></p></div>
+                </div>
+            `).join('');
+
+            // Liste des Comptes Staff
+            document.getElementById('accountsList').innerHTML = accounts.map((acc, idx) => `
+                <li class="seller-item">
+                    <div>
+                        <strong>${acc.nom}</strong> <small>(${acc.id})</small>
+                    </div>
+                    <div>
+                        <span class="seller-grade">${acc.grade.toUpperCase()}</span>
+                        ${acc.grade !== 'patron' ? `<button onclick="deleteAccount(${idx})" style="background:none; border:none; color:var(--primary); cursor:pointer; margin-left:10px;">✕</button>` : ''}
+                    </div>
+                </li>
+            `).join('');
+
+            updatePermissions();
+        }
+
+        function updatePermissions() {
+            const isLogged = currentUser !== null;
+            const isPatron = currentUser && currentUser.role === 'patron';
+            const isPro = isLogged;
+
+            document.body.classList.toggle('admin-mode', isPatron);
+            document.getElementById('adminBanner').style.display = isPatron ? 'block' : 'none';
+            document.getElementById('photoUploadPanel').style.display = isPro ? 'block' : 'none';
+            document.getElementById('addTarifBtn').style.display = isPatron ? 'block' : 'none';
+            document.getElementById('addFideliteBtn').style.display = isPatron ? 'block' : 'none';
+            document.getElementById('staffNavItem').style.display = isLogged ? 'block' : 'none';
+            document.getElementById('adminCreatePanel').style.display = isPatron ? 'block' : 'none';
+
+            // Role Badge
+            const badge = document.getElementById('roleBadge');
+            if (isLogged) {
+                badge.style.display = 'inline-block';
+                badge.innerText = currentUser.grade.toUpperCase();
+                badge.className = 'role-badge ' + (isPatron ? 'badge-patron' : 'badge-pro');
+            } else {
+                badge.style.display = 'none';
+            }
+
+            // Editable Elements
+            document.querySelectorAll('.editable').forEach(el => {
+                el.contentEditable = isPatron ? "true" : "false";
+                if (isPatron) {
+                    el.onblur = function() {
+                        const type = el.getAttribute('data-type');
+                        const field = el.getAttribute('data-field');
+                        const idx = el.getAttribute('data-idx');
+
+                        if (el.id === 'homeTitle') siteData.homeTitle = el.innerText;
+                        else if (el.id === 'homeDesc') siteData.homeDesc = el.innerText;
+                        else if (type && field && idx !== null) {
+                            siteData[type][idx][field] = el.innerText;
+                        }
+                        saveData();
+                    };
+                }
+            });
+        }
+
+        // Navigation & Modales
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+        document.getElementById('openMenuBtn').onclick = () => { sidebar.classList.add('active'); overlay.classList.add('active'); };
+        function closeNav() { sidebar.classList.remove('active'); overlay.classList.remove('active'); }
+        document.getElementById('closeMenuBtn').onclick = closeNav;
+        overlay.onclick = closeNav;
+
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.onclick = () => {
+                const target = item.getAttribute('data-page');
+                document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+                document.querySelectorAll('.page-section').forEach(s => s.id === target ? s.classList.add('active') : s.classList.remove('active'));
+                closeNav();
+            };
+        });
+
+        // Connexion
+        const loginModal = document.getElementById('loginModal');
+        document.getElementById('userBtn').onclick = () => loginModal.classList.add('active');
+        document.getElementById('closeModalBtn').onclick = () => loginModal.classList.remove('active');
+
+        document.getElementById('loginForm').onsubmit = (e) => {
+            e.preventDefault();
+            const id = document.getElementById('loginIdentifiant').value.trim();
+            const pass = document.getElementById('loginPassword').value.trim();
+
+            const user = accounts.find(a => a.id.toLowerCase() === id.toLowerCase() && a.pass === pass);
+            if (user) {
+                currentUser = user;
+                document.getElementById('loginForm').style.display = 'none';
+                document.getElementById('logoutSection').style.display = 'block';
+                document.getElementById('connectedUserText').innerText = `Connecté : ${user.nom} (${user.grade})`;
+                document.getElementById('userBtn').classList.add('logged-in');
+                loginModal.classList.remove('active');
+                renderSite();
+            } else {
+                document.getElementById('loginMsg').innerText = "Identifiant ou mot de passe incorrect.";
+            }
+        };
+
+        document.getElementById('logoutBtn').onclick = () => {
+            currentUser = null;
+            document.getElementById('loginForm').style.display = 'block';
+            document.getElementById('logoutSection').style.display = 'none';
+            document.getElementById('userBtn').classList.remove('logged-in');
+            renderSite();
+        };
+
+        // Créer un compte employé (Patron)
+        document.getElementById('createAccountForm').onsubmit = (e) => {
+            e.preventDefault();
+            const newAcc = {
+                id: document.getElementById('newIdentifiant').value.trim(),
+                pass: document.getElementById('newPassword').value.trim(),
+                nom: document.getElementById('newNom').value.trim(),
+                grade: document.getElementById('newGrade').value,
+                role: "pro"
+            };
+            accounts.push(newAcc);
+            saveData();
+            renderSite();
+            e.target.reset();
+            alert('Nouveau compte créé avec succès !');
+        };
+
+        function deleteAccount(idx) {
+            if (confirm('Supprimer ce compte employé ?')) {
+                accounts.splice(idx, 1);
+                saveData();
+                renderSite();
+            }
+        }
+
+        // Publier Photo
+        document.getElementById('photoForm').onsubmit = (e) => {
+            e.preventDefault();
+            siteData.photos.unshift({
+                url: document.getElementById('photoUrl').value.trim(),
+                title: document.getElementById('photoTitle').value.trim()
+            });
+            saveData();
+            renderSite();
+            e.target.reset();
+        };
+
+        // Ajout Prestations
+        document.getElementById('addTarifBtn').onclick = () => {
+            siteData.tarifs.push({ title: "Nouvelle Prestation", desc: "Description du service", price: "0 €" });
+            saveData();
+            renderSite();
+        };
+
+        document.getElementById('addFideliteBtn').onclick = () => {
+            siteData.fidelite.push({ title: "Nouvel Avantage", desc: "Description de l'offre" });
+            saveData();
+            renderSite();
+        };
+
+        renderSite();
+    </script>
+</body>
+</html>
