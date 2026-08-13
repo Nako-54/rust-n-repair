@@ -935,6 +935,20 @@ section.active {
     background: rgba(255,193,7,0.1);
 }
 
+/* EMPLOYEES TABLE */
+
+.emp-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.emp-item:last-child {
+    border-bottom: none;
+}
+
 /* FOOTER */
 
 footer {
@@ -2105,8 +2119,38 @@ footer strong {
 
         </div>
 
+        <!-- ZONE COMPTE PATRON : CRÉER UN EMPLOYE -->
+        <div id="patronControls" style="display: none; margin-bottom: 25px; padding-bottom: 20px; border-bottom: 1px solid var(--border);">
+            <h3>👨‍🔧 Espace Patron — Gestion des employés</h3>
+            <p style="margin-bottom: 15px;">Créez un compte d'accès pour un nouvel employé / mécanicien.</p>
+            
+            <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+                <div class="form-group">
+                    <label>Identifiant Employé</label>
+                    <input type="text" id="newEmpUser" placeholder="ex: paul">
+                </div>
+                <div class="form-group">
+                    <label>Mot de passe</label>
+                    <input type="password" id="newEmpPass" placeholder="••••••••">
+                </div>
+                <div class="form-group">
+                    <label>Rôle</label>
+                    <select id="newEmpRole">
+                        <option value="MÉCANICIEN">Mécanicien</option>
+                        <option value="PATRON">Patron / Admin</option>
+                    </select>
+                </div>
+            </div>
+            <button class="btn btn-primary" onclick="createEmployeeAccount()">Ajouter l'employé</button>
+
+            <h4 style="margin-top: 20px; margin-bottom: 10px;">Liste des employés enregistrés :</h4>
+            <div id="employeeList">
+                <p style="color: var(--muted); font-size: 0.85rem;">Aucun employé personnalisé créé.</p>
+            </div>
+        </div>
+
         <div id="clientContent">
-            <h3>Vos Rendez-vous</h3>
+            <h3>Liste des Rendez-vous</h3>
             <div id="appointmentsList" style="margin-top: 15px;">
                 <p style="color: var(--muted);">Aucun rendez-vous enregistré.</p>
             </div>
@@ -2313,7 +2357,13 @@ function handleLogin() {
     const userVal = document.getElementById("loginUser").value.trim().toLowerCase();
     const passVal = document.getElementById("loginPass").value.trim();
 
-    if(userVal === "patron" && passVal === "admin") {
+    // Vérification des comptes créés par le patron
+    const customAccounts = JSON.parse(localStorage.getItem("rnr_accounts") || "[]");
+    const foundAcc = customAccounts.find(a => a.user.toLowerCase() === userVal && a.pass === passVal);
+
+    if(foundAcc) {
+        currentUser = { name: foundAcc.user.charAt(0).toUpperCase() + foundAcc.user.slice(1), role: foundAcc.role };
+    } else if(userVal === "patron" && passVal === "admin") {
         currentUser = { name: "Patron", role: "PATRON" };
     } else if(userVal === "meca" && passVal === "meca") {
         currentUser = { name: "Mécanicien", role: "MÉCANICIEN" };
@@ -2349,11 +2399,13 @@ function updateUI() {
     const adminBanner = document.getElementById("adminBanner");
     const uploadZone = document.getElementById("uploadZone");
     const navClientLink = document.getElementById("navClientLink");
+    const patronControls = document.getElementById("patronControls");
 
     if(!currentUser) {
         adminBanner.style.display = "none";
         uploadZone.style.display = "none";
         navClientLink.style.display = "none";
+        patronControls.style.display = "none";
         setEditable(false);
         return;
     }
@@ -2365,18 +2417,69 @@ function updateUI() {
     if(currentUser.role === "PATRON") {
         adminBanner.style.display = "block";
         uploadZone.style.display = "block";
+        patronControls.style.display = "block";
         setEditable(true);
+        renderEmployeeList();
     } else if(currentUser.role === "MÉCANICIEN") {
         adminBanner.style.display = "none";
         uploadZone.style.display = "block";
+        patronControls.style.display = "none";
         setEditable(false);
     } else {
         adminBanner.style.display = "none";
         uploadZone.style.display = "none";
+        patronControls.style.display = "none";
         setEditable(false);
     }
 
     renderAppointments();
+}
+
+// --- CREATION DE COMPTES EMPLOYE (PATRON) ---
+function createEmployeeAccount() {
+    const user = document.getElementById("newEmpUser").value.trim();
+    const pass = document.getElementById("newEmpPass").value.trim();
+    const role = document.getElementById("newEmpRole").value;
+
+    if(!user || !pass) {
+        alert("Veuillez renseigner un identifiant et un mot de passe.");
+        return;
+    }
+
+    const accounts = JSON.parse(localStorage.getItem("rnr_accounts") || "[]");
+    accounts.push({ user, pass, role });
+    localStorage.setItem("rnr_accounts", JSON.stringify(accounts));
+
+    alert(`Compte employé "${user}" créé avec succès !`);
+    document.getElementById("newEmpUser").value = "";
+    document.getElementById("newEmpPass").value = "";
+    renderEmployeeList();
+}
+
+function renderEmployeeList() {
+    const container = document.getElementById("employeeList");
+    const accounts = JSON.parse(localStorage.getItem("rnr_accounts") || "[]");
+
+    if(accounts.length === 0) {
+        container.innerHTML = `<p style="color: var(--muted); font-size: 0.85rem;">Aucun employé personnalisé créé.</p>`;
+        return;
+    }
+
+    container.innerHTML = accounts.map((acc, index) => `
+        <div class="emp-item">
+            <div>
+                <strong>${acc.user}</strong> — <span style="color: var(--muted); font-size: 0.8rem;">${acc.role}</span>
+            </div>
+            <button class="btn btn-secondary" style="padding: 2px 8px; font-size: 0.75rem; color: var(--red);" onclick="deleteAccount(${index})">🗑️ Supprimer</button>
+        </div>
+    `).join("");
+}
+
+function deleteAccount(index) {
+    let accounts = JSON.parse(localStorage.getItem("rnr_accounts") || "[]");
+    accounts.splice(index, 1);
+    localStorage.setItem("rnr_accounts", JSON.stringify(accounts));
+    renderEmployeeList();
 }
 
 // --- EDITEUR PATRON ---
@@ -2484,22 +2587,72 @@ function renderAppointments() {
     const container = document.getElementById("appointmentsList");
     const rdvList = JSON.parse(localStorage.getItem("rnr_rdv") || "[]");
 
-    if(rdvList.length === 0) {
+    if (rdvList.length === 0) {
         container.innerHTML = `<p style="color: var(--muted);">Aucun rendez-vous enregistré.</p>`;
         return;
     }
 
-    container.innerHTML = rdvList.map(rdv => `
-        <div class="appointment">
-            <div class="appointment-info">
-                <strong>${rdv.service} — ${rdv.vehicule}</strong>
-                <span>Client: ${rdv.nom} | Date: ${rdv.date}</span>
+    const isPro = currentUser && (currentUser.role === "PATRON" || currentUser.role === "MÉCANICIEN");
+
+    container.innerHTML = rdvList.map((rdv, index) => {
+        let statusClass = "pending";
+        if (rdv.status === "Validé" || rdv.status === "Terminé" || rdv.status === "Confirmé") {
+            statusClass = "confirmed";
+        }
+
+        return `
+            <div class="appointment">
+                <div class="appointment-info">
+                    <strong>${rdv.service} — ${rdv.vehicule}</strong>
+                    <span>Client: ${rdv.nom} | Date: ${rdv.date}</span>
+                </div>
+                
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span class="status ${statusClass}">
+                        ${rdv.status}
+                    </span>
+
+                    ${isPro ? `
+                        <button 
+                            class="btn btn-secondary" 
+                            style="padding: 4px 8px; font-size: 0.75rem;" 
+                            onclick="updateRDVStatus(${index}, 'Validé')"
+                            title="Valider le rendez-vous"
+                        >
+                            ✅
+                        </button>
+                        <button 
+                            class="btn btn-secondary" 
+                            style="padding: 4px 8px; font-size: 0.75rem; color: var(--red);" 
+                            onclick="deleteRDV(${index})"
+                            title="Supprimer"
+                        >
+                            🗑️
+                        </button>
+                    ` : ''}
+                </div>
             </div>
-            <span class="status ${rdv.status === 'Confirmé' ? 'confirmed' : 'pending'}">
-                ${rdv.status}
-            </span>
-        </div>
-    `).join("");
+        `;
+    }).join("");
+}
+
+function updateRDVStatus(index, newStatus) {
+    const rdvList = JSON.parse(localStorage.getItem("rnr_rdv") || "[]");
+    
+    if (rdvList[index]) {
+        rdvList[index].status = newStatus;
+        localStorage.setItem("rnr_rdv", JSON.stringify(rdvList));
+        renderAppointments();
+    }
+}
+
+function deleteRDV(index) {
+    if (!confirm("Voulez-vous vraiment supprimer ce rendez-vous ?")) return;
+    
+    let rdvList = JSON.parse(localStorage.getItem("rnr_rdv") || "[]");
+    rdvList.splice(index, 1);
+    localStorage.setItem("rnr_rdv", JSON.stringify(rdvList));
+    renderAppointments();
 }
 
 </script>
