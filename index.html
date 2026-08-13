@@ -3,473 +3,2123 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>Rust N Repair — Garage Automobile</title>
 
 <style>
+
 :root {
     --bg: #090a0c;
     --bg-soft: #101216;
     --card: #15171c;
     --card-hover: #1b1e24;
+
     --red: #e53935;
     --red-dark: #a91f1c;
     --red-light: #ff5b57;
+
     --green: #27c46b;
     --yellow: #ffc107;
     --blue: #3b82f6;
+
     --white: #f5f5f5;
     --text: #d6d6da;
     --muted: #858892;
+
     --border: rgba(255,255,255,0.08);
+
     --radius: 14px;
 }
 
-* { margin: 0; padding: 0; box-sizing: border-box; font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; }
-html { scroll-behavior: smooth; }
-body { background: radial-gradient(circle at top right, rgba(229,57,53,0.08), transparent 30%), var(--bg); color: var(--white); min-height: 100vh; }
+/* RESET */
 
-::-webkit-scrollbar { width: 7px; }
-::-webkit-scrollbar-track { background: #08090b; }
-::-webkit-scrollbar-thumb { background: #33353b; border-radius: 20px; }
-::-webkit-scrollbar-thumb:hover { background: var(--red); }
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family:
+        Inter,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Roboto,
+        Arial,
+        sans-serif;
+}
 
-header { position: sticky; top: 0; z-index: 1000; height: 70px; display: flex; align-items: center; justify-content: space-between; padding: 0 28px; background: rgba(9,10,12,0.82); backdrop-filter: blur(18px); border-bottom: 1px solid var(--border); }
-.logo { font-size: 1.45rem; font-weight: 900; letter-spacing: 1px; text-transform: uppercase; }
-.logo span { color: var(--red); }
-.header-actions { display: flex; align-items: center; gap: 10px; }
-.icon-btn { width: 42px; height: 42px; border: 1px solid var(--border); border-radius: 10px; background: rgba(255,255,255,0.04); color: white; cursor: pointer; font-size: 1.15rem; transition: 0.2s; }
-.icon-btn:hover { background: rgba(229,57,53,0.15); border-color: rgba(229,57,53,0.4); transform: translateY(-1px); }
+html {
+    scroll-behavior: smooth;
+}
 
-.sidebar { position: fixed; top: 0; left: -310px; width: 300px; height: 100vh; z-index: 2000; background: linear-gradient(180deg, #111318 0%, #0d0e11 100%); border-right: 1px solid var(--border); padding: 24px; transition: left 0.3s ease; box-shadow: 20px 0 50px rgba(0,0,0,0.35); }
-.sidebar.open { left: 0; }
-.sidebar-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 35px; }
-.sidebar-title { font-size: 1.15rem; font-weight: 800; }
-.sidebar-title span { color: var(--red); }
-.close-btn { border: none; background: transparent; color: var(--muted); font-size: 1.4rem; cursor: pointer; }
-.nav-links { list-style: none; display: flex; flex-direction: column; gap: 7px; }
-.nav-links a { display: flex; align-items: center; gap: 13px; padding: 13px 14px; border-radius: 10px; color: var(--text); text-decoration: none; font-weight: 600; transition: 0.2s; }
-.nav-links a:hover, .nav-links a.active { background: rgba(229,57,53,0.12); color: white; }
-.nav-links a.active { border-left: 3px solid var(--red); }
-.sidebar-footer { position: absolute; bottom: 25px; left: 24px; right: 24px; padding-top: 20px; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.8rem; }
+body {
+    background:
+        radial-gradient(circle at top right, rgba(229,57,53,0.08), transparent 30%),
+        var(--bg);
 
-.overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 1500; display: none; }
-.overlay.show { display: block; }
+    color: var(--white);
+    min-height: 100vh;
+}
 
-.admin-banner { display: none; background: linear-gradient(90deg, #ffb300, #ffc107, #ffb300); color: #111; padding: 10px 20px; text-align: center; font-weight: 800; font-size: 0.85rem; }
+/* SCROLLBAR */
 
-main { width: 100%; max-width: 1180px; margin: auto; padding: 35px 25px 80px; }
-section { display: none; animation: fadeIn 0.35s ease; }
-section.active { display: block; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+::-webkit-scrollbar {
+    width: 7px;
+}
 
-.hero { min-height: 460px; border-radius: 22px; overflow: hidden; position: relative; display: flex; align-items: flex-end; margin-bottom: 35px; background: linear-gradient(90deg, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.7) 45%, rgba(0,0,0,0.25) 100%), linear-gradient(0deg, rgba(0,0,0,0.8), transparent), url("https://images.unsplash.com/photo-1503736334956-4c8f8e92946d?auto=format&fit=crop&w=1600&q=85"); background-size: cover; background-position: center; }
-.hero-content { padding: 45px; max-width: 650px; }
-.hero-badge { display: inline-flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 30px; background: rgba(229,57,53,0.15); border: 1px solid rgba(229,57,53,0.35); color: #ff7773; font-size: 0.8rem; font-weight: 800; margin-bottom: 18px; }
-.hero h1 { font-size: clamp(2.2rem, 6vw, 4.4rem); line-height: 0.98; font-weight: 950; text-transform: uppercase; margin-bottom: 20px; }
-.hero h1 span { color: var(--red); }
-.hero p { color: #c8c8cb; line-height: 1.7; max-width: 550px; margin-bottom: 25px; }
-.hero-buttons { display: flex; flex-wrap: wrap; gap: 10px; }
+::-webkit-scrollbar-track {
+    background: #08090b;
+}
 
-.btn { border: none; padding: 12px 18px; border-radius: 10px; font-weight: 800; cursor: pointer; transition: 0.2s; font-size: 0.9rem; }
-.btn-primary { background: var(--red); color: white; }
-.btn-primary:hover { background: var(--red-light); transform: translateY(-2px); box-shadow: 0 8px 25px rgba(229,57,53,0.25); }
-.btn-secondary { background: rgba(255,255,255,0.08); color: white; border: 1px solid var(--border); }
-.btn-secondary:hover { background: rgba(255,255,255,0.13); }
+::-webkit-scrollbar-thumb {
+    background: #33353b;
+    border-radius: 20px;
+}
 
-.section-heading { margin-bottom: 20px; }
-.section-heading h2 { font-size: 1.8rem; display: flex; align-items: center; gap: 10px; margin-bottom: 7px; }
-.section-heading h2::before { content: ""; width: 4px; height: 28px; background: var(--red); border-radius: 10px; }
-.section-heading p { color: var(--muted); }
+::-webkit-scrollbar-thumb:hover {
+    background: var(--red);
+}
 
-.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 35px; }
-.stat-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; transition: 0.2s; }
-.stat-card:hover { background: var(--card-hover); transform: translateY(-3px); }
-.stat-icon { font-size: 1.5rem; margin-bottom: 10px; }
-.stat-value { font-size: 1.6rem; font-weight: 900; }
-.stat-label { color: var(--muted); font-size: 0.85rem; margin-top: 3px; }
+/* HEADER */
 
-.card { background: linear-gradient(145deg, rgba(255,255,255,0.035), rgba(255,255,255,0.015)); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; transition: 0.2s; }
-.card:hover { border-color: rgba(229,57,53,0.25); }
-.card h3 { margin-bottom: 8px; }
-.card p { color: var(--muted); line-height: 1.6; font-size: 0.92rem; }
-.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; }
+header {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
 
-.service-icon { width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 10px; background: rgba(229,57,53,0.12); font-size: 1.4rem; margin-bottom: 15px; }
-.price { color: var(--green); font-size: 1.35rem; font-weight: 900; margin-top: 13px; }
+    height: 70px;
 
-.gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 15px; }
-.gallery-item { overflow: hidden; border-radius: 13px; background: var(--card); border: 1px solid var(--border); transition: 0.25s; }
-.gallery-item:hover { transform: translateY(-4px); }
-.gallery-item img { width: 100%; height: 180px; object-fit: cover; display: block; }
-.gallery-caption { padding: 13px; color: var(--text); font-size: 0.88rem; }
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 
-.form-group { margin-bottom: 15px; }
-.form-group label { display: block; color: var(--muted); font-size: 0.8rem; font-weight: 700; margin-bottom: 7px; }
-.form-group input, .form-group textarea, .form-group select { width: 100%; background: #090a0c; border: 1px solid var(--border); border-radius: 9px; color: white; padding: 12px; outline: none; transition: 0.2s; }
-.form-group textarea { min-height: 100px; resize: vertical; }
-.form-group input:focus, .form-group textarea:focus, .form-group select:focus { border-color: rgba(229,57,53,0.6); box-shadow: 0 0 0 3px rgba(229,57,53,0.08); }
+    padding: 0 28px;
 
-.modal { position: fixed; inset: 0; z-index: 3000; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,0.82); backdrop-filter: blur(8px); padding: 20px; }
-.modal.open { display: flex; }
-.modal-content { width: 100%; max-width: 420px; background: linear-gradient(145deg, #181a1f, #0f1013); border: 1px solid var(--border); border-radius: 18px; padding: 28px; box-shadow: 0 30px 80px rgba(0,0,0,0.6); animation: modalIn 0.25s ease; }
-@keyframes modalIn { from { opacity: 0; transform: scale(0.95) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
-.modal-logo { text-align: center; font-size: 1.6rem; font-weight: 900; margin-bottom: 5px; }
-.modal-logo span { color: var(--red); }
-.modal-subtitle { text-align: center; color: var(--muted); font-size: 0.85rem; margin-bottom: 25px; }
+    background: rgba(9,10,12,0.82);
+    backdrop-filter: blur(18px);
 
-.profile-header { display: flex; align-items: center; gap: 15px; padding-bottom: 20px; margin-bottom: 20px; border-bottom: 1px solid var(--border); }
-.avatar { width: 55px; height: 55px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, var(--red), var(--red-dark)); font-size: 1.4rem; }
-.role-badge { display: inline-block; margin-top: 5px; padding: 4px 8px; border-radius: 5px; background: rgba(229,57,53,0.12); color: #ff7773; font-size: 0.7rem; font-weight: 800; }
+    border-bottom: 1px solid var(--border);
+}
 
-[contenteditable="true"] { outline: 1px dashed var(--yellow); outline-offset: 4px; border-radius: 4px; }
+.logo {
+    font-size: 1.45rem;
+    font-weight: 900;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
 
-.appointment { display: flex; align-items: center; justify-content: space-between; gap: 15px; padding: 15px 0; border-bottom: 1px solid var(--border); }
-.appointment:last-child { border-bottom: none; }
-.appointment-info strong { display: block; margin-bottom: 4px; }
-.appointment-info span { color: var(--muted); font-size: 0.8rem; }
-.status { padding: 6px 9px; border-radius: 6px; font-size: 0.7rem; font-weight: 800; }
-.status.confirmed { color: var(--green); background: rgba(39,196,107,0.1); }
-.status.pending { color: var(--yellow); background: rgba(255,193,7,0.1); }
+.logo span {
+    color: var(--red);
+}
 
-.emp-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
-.emp-item:last-child { border-bottom: none; }
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
 
-footer { border-top: 1px solid var(--border); padding: 25px; text-align: center; color: var(--muted); font-size: 0.8rem; }
-footer strong { color: white; }
+.icon-btn {
+    width: 42px;
+    height: 42px;
+
+    border: 1px solid var(--border);
+    border-radius: 10px;
+
+    background: rgba(255,255,255,0.04);
+    color: white;
+
+    cursor: pointer;
+
+    font-size: 1.15rem;
+
+    transition: 0.2s;
+}
+
+.icon-btn:hover {
+    background: rgba(229,57,53,0.15);
+    border-color: rgba(229,57,53,0.4);
+    transform: translateY(-1px);
+}
+
+/* SIDEBAR */
+
+.sidebar {
+    position: fixed;
+
+    top: 0;
+    left: -310px;
+
+    width: 300px;
+    height: 100vh;
+
+    z-index: 2000;
+
+    background:
+        linear-gradient(
+            180deg,
+            #111318 0%,
+            #0d0e11 100%
+        );
+
+    border-right: 1px solid var(--border);
+
+    padding: 24px;
+
+    transition: left 0.3s ease;
+
+    box-shadow: 20px 0 50px rgba(0,0,0,0.35);
+}
+
+.sidebar.open {
+    left: 0;
+}
+
+.sidebar-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    margin-bottom: 35px;
+}
+
+.sidebar-title {
+    font-size: 1.15rem;
+    font-weight: 800;
+}
+
+.sidebar-title span {
+    color: var(--red);
+}
+
+.close-btn {
+    border: none;
+    background: transparent;
+
+    color: var(--muted);
+
+    font-size: 1.4rem;
+
+    cursor: pointer;
+}
+
+.nav-links {
+    list-style: none;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 7px;
+}
+
+.nav-links a {
+    display: flex;
+    align-items: center;
+
+    gap: 13px;
+
+    padding: 13px 14px;
+
+    border-radius: 10px;
+
+    color: var(--text);
+
+    text-decoration: none;
+
+    font-weight: 600;
+
+    transition: 0.2s;
+}
+
+.nav-links a:hover,
+.nav-links a.active {
+    background: rgba(229,57,53,0.12);
+    color: white;
+}
+
+.nav-links a.active {
+    border-left: 3px solid var(--red);
+}
+
+.sidebar-footer {
+    position: absolute;
+    bottom: 25px;
+    left: 24px;
+    right: 24px;
+
+    padding-top: 20px;
+
+    border-top: 1px solid var(--border);
+
+    color: var(--muted);
+
+    font-size: 0.8rem;
+}
+
+/* OVERLAY */
+
+.overlay {
+    position: fixed;
+
+    inset: 0;
+
+    background: rgba(0,0,0,0.65);
+
+    z-index: 1500;
+
+    display: none;
+}
+
+.overlay.show {
+    display: block;
+}
+
+/* ADMIN BANNER */
+
+.admin-banner {
+    display: none;
+
+    background:
+        linear-gradient(
+            90deg,
+            #ffb300,
+            #ffc107,
+            #ffb300
+        );
+
+    color: #111;
+
+    padding: 10px 20px;
+
+    text-align: center;
+
+    font-weight: 800;
+
+    font-size: 0.85rem;
+}
+
+/* MAIN */
+
+main {
+    width: 100%;
+    max-width: 1180px;
+
+    margin: auto;
+
+    padding: 35px 25px 80px;
+}
+
+section {
+    display: none;
+
+    animation: fadeIn 0.35s ease;
+}
+
+section.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* HERO */
+
+.hero {
+    min-height: 460px;
+
+    border-radius: 22px;
+
+    overflow: hidden;
+
+    position: relative;
+
+    display: flex;
+    align-items: flex-end;
+
+    margin-bottom: 35px;
+
+    background:
+        linear-gradient(
+            90deg,
+            rgba(0,0,0,0.95) 0%,
+            rgba(0,0,0,0.7) 45%,
+            rgba(0,0,0,0.25) 100%
+        ),
+        linear-gradient(
+            0deg,
+            rgba(0,0,0,0.8),
+            transparent
+        ),
+        url("https://images.unsplash.com/photo-1503736334956-4c8f8e92946d?auto=format&fit=crop&w=1600&q=85");
+
+    background-size: cover;
+    background-position: center;
+}
+
+.hero-content {
+    padding: 45px;
+    max-width: 650px;
+}
+
+.hero-badge {
+    display: inline-flex;
+
+    align-items: center;
+    gap: 8px;
+
+    padding: 7px 12px;
+
+    border-radius: 30px;
+
+    background: rgba(229,57,53,0.15);
+
+    border: 1px solid rgba(229,57,53,0.35);
+
+    color: #ff7773;
+
+    font-size: 0.8rem;
+
+    font-weight: 800;
+
+    margin-bottom: 18px;
+}
+
+.hero h1 {
+    font-size: clamp(2.2rem, 6vw, 4.4rem);
+
+    line-height: 0.98;
+
+    font-weight: 950;
+
+    text-transform: uppercase;
+
+    margin-bottom: 20px;
+}
+
+.hero h1 span {
+    color: var(--red);
+}
+
+.hero p {
+    color: #c8c8cb;
+
+    line-height: 1.7;
+
+    max-width: 550px;
+
+    margin-bottom: 25px;
+}
+
+.hero-buttons {
+    display: flex;
+    flex-wrap: wrap;
+
+    gap: 10px;
+}
+
+/* BUTTONS */
+
+.btn {
+    border: none;
+
+    padding: 12px 18px;
+
+    border-radius: 10px;
+
+    font-weight: 800;
+
+    cursor: pointer;
+
+    transition: 0.2s;
+
+    font-size: 0.9rem;
+}
+
+.btn-primary {
+    background: var(--red);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: var(--red-light);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(229,57,53,0.25);
+}
+
+.btn-secondary {
+    background: rgba(255,255,255,0.08);
+    color: white;
+
+    border: 1px solid var(--border);
+}
+
+.btn-secondary:hover {
+    background: rgba(255,255,255,0.13);
+}
+
+/* SECTION TITLE */
+
+.section-heading {
+    margin-bottom: 20px;
+}
+
+.section-heading h2 {
+    font-size: 1.8rem;
+
+    display: flex;
+    align-items: center;
+
+    gap: 10px;
+
+    margin-bottom: 7px;
+}
+
+.section-heading h2::before {
+    content: "";
+
+    width: 4px;
+    height: 28px;
+
+    background: var(--red);
+
+    border-radius: 10px;
+}
+
+.section-heading p {
+    color: var(--muted);
+}
+
+/* STATS */
+
+.stats-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(auto-fit, minmax(180px, 1fr));
+
+    gap: 15px;
+
+    margin-bottom: 35px;
+}
+
+.stat-card {
+    background: var(--card);
+
+    border: 1px solid var(--border);
+
+    border-radius: var(--radius);
+
+    padding: 20px;
+
+    transition: 0.2s;
+}
+
+.stat-card:hover {
+    background: var(--card-hover);
+    transform: translateY(-3px);
+}
+
+.stat-icon {
+    font-size: 1.5rem;
+
+    margin-bottom: 10px;
+}
+
+.stat-value {
+    font-size: 1.6rem;
+    font-weight: 900;
+}
+
+.stat-label {
+    color: var(--muted);
+    font-size: 0.85rem;
+    margin-top: 3px;
+}
+
+/* CARDS */
+
+.card {
+    background:
+        linear-gradient(
+            145deg,
+            rgba(255,255,255,0.035),
+            rgba(255,255,255,0.015)
+        );
+
+    border: 1px solid var(--border);
+
+    border-radius: var(--radius);
+
+    padding: 20px;
+
+    transition: 0.2s;
+}
+
+.card:hover {
+    border-color: rgba(229,57,53,0.25);
+}
+
+.card h3 {
+    margin-bottom: 8px;
+}
+
+.card p {
+    color: var(--muted);
+
+    line-height: 1.6;
+
+    font-size: 0.92rem;
+}
+
+.grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(auto-fit, minmax(250px, 1fr));
+
+    gap: 15px;
+}
+
+/* SERVICES */
+
+.service-icon {
+    width: 45px;
+    height: 45px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 10px;
+
+    background: rgba(229,57,53,0.12);
+
+    font-size: 1.4rem;
+
+    margin-bottom: 15px;
+}
+
+.price {
+    color: var(--green);
+
+    font-size: 1.35rem;
+
+    font-weight: 900;
+
+    margin-top: 13px;
+}
+
+/* GALLERY */
+
+.gallery-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(auto-fill, minmax(210px, 1fr));
+
+    gap: 15px;
+}
+
+.gallery-item {
+    overflow: hidden;
+
+    border-radius: 13px;
+
+    background: var(--card);
+
+    border: 1px solid var(--border);
+
+    transition: 0.25s;
+}
+
+.gallery-item:hover {
+    transform: translateY(-4px);
+}
+
+.gallery-item img {
+    width: 100%;
+
+    height: 180px;
+
+    object-fit: cover;
+
+    display: block;
+}
+
+.gallery-caption {
+    padding: 13px;
+
+    color: var(--text);
+
+    font-size: 0.88rem;
+}
+
+/* FORMS */
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+
+    color: var(--muted);
+
+    font-size: 0.8rem;
+
+    font-weight: 700;
+
+    margin-bottom: 7px;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+    width: 100%;
+
+    background: #090a0c;
+
+    border: 1px solid var(--border);
+
+    border-radius: 9px;
+
+    color: white;
+
+    padding: 12px;
+
+    outline: none;
+
+    transition: 0.2s;
+}
+
+.form-group textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+    border-color: rgba(229,57,53,0.6);
+
+    box-shadow:
+        0 0 0 3px rgba(229,57,53,0.08);
+}
+
+/* LOGIN MODAL */
+
+.modal {
+    position: fixed;
+
+    inset: 0;
+
+    z-index: 3000;
+
+    display: none;
+
+    align-items: center;
+    justify-content: center;
+
+    background: rgba(0,0,0,0.82);
+
+    backdrop-filter: blur(8px);
+
+    padding: 20px;
+}
+
+.modal.open {
+    display: flex;
+}
+
+.modal-content {
+    width: 100%;
+
+    max-width: 420px;
+
+    background:
+        linear-gradient(
+            145deg,
+            #181a1f,
+            #0f1013
+        );
+
+    border: 1px solid var(--border);
+
+    border-radius: 18px;
+
+    padding: 28px;
+
+    box-shadow: 0 30px 80px rgba(0,0,0,0.6);
+
+    animation: modalIn 0.25s ease;
+}
+
+@keyframes modalIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.modal-logo {
+    text-align: center;
+
+    font-size: 1.6rem;
+
+    font-weight: 900;
+
+    margin-bottom: 5px;
+}
+
+.modal-logo span {
+    color: var(--red);
+}
+
+.modal-subtitle {
+    text-align: center;
+
+    color: var(--muted);
+
+    font-size: 0.85rem;
+
+    margin-bottom: 25px;
+}
+
+/* PROFILE */
+
+.profile-header {
+    display: flex;
+
+    align-items: center;
+
+    gap: 15px;
+
+    padding-bottom: 20px;
+
+    margin-bottom: 20px;
+
+    border-bottom: 1px solid var(--border);
+}
+
+.avatar {
+    width: 55px;
+    height: 55px;
+
+    border-radius: 50%;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--red),
+            var(--red-dark)
+        );
+
+    font-size: 1.4rem;
+}
+
+.role-badge {
+    display: inline-block;
+
+    margin-top: 5px;
+
+    padding: 4px 8px;
+
+    border-radius: 5px;
+
+    background: rgba(229,57,53,0.12);
+
+    color: #ff7773;
+
+    font-size: 0.7rem;
+
+    font-weight: 800;
+}
+
+/* EDIT MODE */
+
+[contenteditable="true"] {
+    outline: 1px dashed var(--yellow);
+
+    outline-offset: 4px;
+
+    border-radius: 4px;
+}
+
+.edit-hint {
+    display: none;
+
+    margin-bottom: 20px;
+
+    padding: 12px;
+
+    border-radius: 10px;
+
+    background: rgba(255,193,7,0.1);
+
+    border: 1px solid rgba(255,193,7,0.25);
+
+    color: #ffc107;
+
+    font-size: 0.85rem;
+
+    font-weight: 700;
+}
+
+/* APPOINTMENTS */
+
+.appointment {
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 15px;
+
+    padding: 15px 0;
+
+    border-bottom: 1px solid var(--border);
+}
+
+.appointment:last-child {
+    border-bottom: none;
+}
+
+.appointment-info strong {
+    display: block;
+
+    margin-bottom: 4px;
+}
+
+.appointment-info span {
+    color: var(--muted);
+
+    font-size: 0.8rem;
+}
+
+.status {
+    padding: 6px 9px;
+
+    border-radius: 6px;
+
+    font-size: 0.7rem;
+
+    font-weight: 800;
+}
+
+.status.confirmed {
+    color: var(--green);
+
+    background: rgba(39,196,107,0.1);
+}
+
+.status.pending {
+    color: var(--yellow);
+
+    background: rgba(255,193,7,0.1);
+}
+
+/* EMPLOYEES TABLE */
+
+.emp-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.emp-item:last-child {
+    border-bottom: none;
+}
+
+/* FOOTER */
+
+footer {
+    border-top: 1px solid var(--border);
+
+    padding: 25px;
+
+    text-align: center;
+
+    color: var(--muted);
+
+    font-size: 0.8rem;
+}
+
+footer strong {
+    color: white;
+}
+
+/* RESPONSIVE */
 
 @media(max-width:700px) {
-    header { padding: 0 15px; }
-    main { padding: 20px 15px 60px; }
-    .hero { min-height: 500px; border-radius: 17px; background-position: 65% center; }
-    .hero-content { padding: 25px; }
-    .hero h1 { font-size: 2.6rem; }
-    .stats-grid { grid-template-columns: repeat(2, 1fr); }
-    .gallery-grid { grid-template-columns: repeat(2, 1fr); }
-    .gallery-item img { height: 130px; }
-    .appointment { align-items: flex-start; }
+
+    header {
+        padding: 0 15px;
+    }
+
+    main {
+        padding: 20px 15px 60px;
+    }
+
+    .hero {
+        min-height: 500px;
+
+        border-radius: 17px;
+
+        background-position: 65% center;
+    }
+
+    .hero-content {
+        padding: 25px;
+    }
+
+    .hero h1 {
+        font-size: 2.6rem;
+    }
+
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .gallery-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .gallery-item img {
+        height: 130px;
+    }
+
+    .appointment {
+        align-items: flex-start;
+    }
 }
 
 @media(max-width:430px) {
-    .logo { font-size: 1.15rem; }
-    .hero-buttons { flex-direction: column; }
-    .hero-buttons .btn { width: 100%; }
-    .gallery-grid { grid-template-columns: 1fr; }
-    .gallery-item img { height: 200px; }
+
+    .logo {
+        font-size: 1.15rem;
+    }
+
+    .hero-buttons {
+        flex-direction: column;
+    }
+
+    .hero-buttons .btn {
+        width: 100%;
+    }
+
+    .gallery-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .gallery-item img {
+        height: 200px;
+    }
 }
+
 </style>
 </head>
 
 <body>
 
 <!-- HEADER -->
+
 <header>
+
     <div class="header-actions">
-        <button class="icon-btn" onclick="toggleSidebar()" aria-label="Menu">☰</button>
+
+        <button
+            class="icon-btn"
+            onclick="toggleSidebar()"
+            aria-label="Menu"
+        >
+            ☰
+        </button>
+
     </div>
-    <div class="logo">Rust <span>N</span> Repair</div>
+
+    <div class="logo">
+        Rust <span>N</span> Repair
+    </div>
+
     <div class="header-actions">
-        <button class="icon-btn" onclick="openLoginModal()" aria-label="Espace Pro" id="loginBtn">👤</button>
+
+        <button
+            class="icon-btn"
+            onclick="openLoginModal()"
+            aria-label="Espace Pro"
+            id="loginBtn"
+        >
+            👤
+        </button>
+
     </div>
+
 </header>
 
+
 <!-- SIDEBAR -->
+
 <div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
+
 <aside class="sidebar" id="sidebar">
+
     <div class="sidebar-top">
-        <div class="sidebar-title">Rust <span>N</span> Repair</div>
-        <button class="close-btn" onclick="toggleSidebar()">✕</button>
+
+        <div class="sidebar-title">
+            Rust <span>N</span> Repair
+        </div>
+
+        <button
+            class="close-btn"
+            onclick="toggleSidebar()"
+        >
+            ✕
+        </button>
+
     </div>
+
 
     <ul class="nav-links">
-        <li><a href="#" class="active" onclick="showSection('accueil', this)">🏠 Accueil</a></li>
-        <li><a href="#" onclick="showSection('services', this)">🔧 Nos services</a></li>
-        <li><a href="#" onclick="showSection('photos', this)">📸 Galerie</a></li>
-        <li><a href="#" onclick="showSection('tarifs', this)">💰 Tarifs</a></li>
-        <li><a href="#" onclick="showSection('fidelite', this)">⭐ Fidélité</a></li>
-        <li><a href="#" onclick="showSection('rendezvous', this)">📅 Rendez-vous</a></li>
-        <li><a href="#" onclick="showSection('espace-client', this)" id="navClientLink" style="display:none;">👤 Mon Espace</a></li>
-        <li><a href="#" onclick="showSection('contact', this)">📍 Contact</a></li>
+
+        <li>
+            <a
+                href="#"
+                class="active"
+                onclick="showSection('accueil', this)"
+            >
+                🏠
+                Accueil
+            </a>
+        </li>
+
+        <li>
+            <a
+                href="#"
+                onclick="showSection('services', this)"
+            >
+                🔧
+                Nos services
+            </a>
+        </li>
+
+        <li>
+            <a
+                href="#"
+                onclick="showSection('photos', this)"
+            >
+                📸
+                Galerie
+            </a>
+        </li>
+
+        <li>
+            <a
+                href="#"
+                onclick="showSection('tarifs', this)"
+            >
+                💰
+                Tarifs
+            </a>
+        </li>
+
+        <li>
+            <a
+                href="#"
+                onclick="showSection('fidelite', this)"
+            >
+                ⭐
+                Fidélité
+            </a>
+        </li>
+
+        <li>
+            <a
+                href="#"
+                onclick="showSection('rendezvous', this)"
+            >
+                📅
+                Rendez-vous
+            </a>
+        </li>
+
+        <li>
+            <a
+                href="#"
+                onclick="showSection('espace-client', this)"
+                id="navClientLink"
+                style="display:none;"
+            >
+                👤
+                Mon Espace
+            </a>
+        </li>
+
+        <li>
+            <a
+                href="#"
+                onclick="showSection('contact', this)"
+            >
+                📍
+                Contact
+            </a>
+        </li>
+
     </ul>
 
+
     <div class="sidebar-footer">
+
         Rust N Repair<br>
         <strong>Atelier automobile</strong>
+
     </div>
+
 </aside>
 
+
 <!-- ADMIN BANNER -->
-<div class="admin-banner" id="adminBanner">
+
+<div
+    class="admin-banner"
+    id="adminBanner"
+>
     ⚠️ MODE PATRON ACTIF — Les textes entourés peuvent être modifiés directement.
 </div>
 
+
 <!-- MAIN -->
+
 <main>
 
-<!-- ACCUEIL -->
-<section id="accueil" class="active">
+
+<!-- ================= ACCUEIL ================= -->
+
+<section
+    id="accueil"
+    class="active"
+>
+
+
     <div class="hero">
+
         <div class="hero-content">
-            <div class="hero-badge">🔴 GARAGE AUTOMOBILE</div>
-            <h1 contenteditable="false" class="editable" id="heroTitle">Rust <span>N</span> Repair</h1>
-            <p contenteditable="false" class="editable" id="heroDesc">
-                Votre atelier automobile spécialisé dans l'entretien, la réparation et la restauration de véhicules. Un travail sérieux, rapide et passionné.
-            </p>
-            <div class="hero-buttons">
-                <button class="btn btn-primary" onclick="showSection('rendezvous')">📅 Prendre rendez-vous</button>
-                <button class="btn btn-secondary" onclick="showSection('services')">🔧 Découvrir nos services</button>
+
+            <div class="hero-badge">
+                🔴 GARAGE AUTOMOBILE
             </div>
+
+            <h1 contenteditable="false" class="editable" id="heroTitle">
+                Rust <span>N</span> Repair
+            </h1>
+
+            <p
+                contenteditable="false"
+                class="editable"
+                id="heroDesc"
+            >
+                Votre atelier automobile spécialisé dans
+                l'entretien, la réparation et la restauration
+                de véhicules. Un travail sérieux, rapide et
+                passionné.
+            </p>
+
+            <div class="hero-buttons">
+
+                <button
+                    class="btn btn-primary"
+                    onclick="showSection('rendezvous')"
+                >
+                    📅 Prendre rendez-vous
+                </button>
+
+                <button
+                    class="btn btn-secondary"
+                    onclick="showSection('services')"
+                >
+                    🔧 Découvrir nos services
+                </button>
+
+            </div>
+
         </div>
+
     </div>
+
+
+    <!-- STATS -->
 
     <div class="stats-grid">
+
         <div class="stat-card">
-            <div class="stat-icon">🔧</div>
-            <div class="stat-value">10+</div>
-            <div class="stat-label">Services disponibles</div>
+
+            <div class="stat-icon">
+                🔧
+            </div>
+
+            <div class="stat-value">
+                10+
+            </div>
+
+            <div class="stat-label">
+                Services disponibles
+            </div>
+
         </div>
+
+
         <div class="stat-card">
-            <div class="stat-icon">🚗</div>
-            <div class="stat-value">250+</div>
-            <div class="stat-label">Véhicules entretenus</div>
+
+            <div class="stat-icon">
+                🚗
+            </div>
+
+            <div class="stat-value">
+                250+
+            </div>
+
+            <div class="stat-label">
+                Véhicules entretenus
+            </div>
+
         </div>
+
+
         <div class="stat-card">
-            <div class="stat-icon">⭐</div>
-            <div class="stat-value">4.9/5</div>
-            <div class="stat-label">Satisfaction clients</div>
+
+            <div class="stat-icon">
+                ⭐
+            </div>
+
+            <div class="stat-value">
+                4.9/5
+            </div>
+
+            <div class="stat-label">
+                Satisfaction clients
+            </div>
+
         </div>
+
+
         <div class="stat-card">
-            <div class="stat-icon">🕐</div>
-            <div class="stat-value">8h-19h</div>
-            <div class="stat-label">Du lundi au vendredi</div>
+
+            <div class="stat-icon">
+                🕐
+            </div>
+
+            <div class="stat-value">
+                8h-19h
+            </div>
+
+            <div class="stat-label">
+                Du lundi au vendredi
+            </div>
+
         </div>
+
     </div>
+
+
+    <!-- PRESENTATION -->
 
     <div class="section-heading">
-        <h2>Bienvenue chez Rust N Repair</h2>
-        <p>La passion automobile au service de votre véhicule.</p>
+
+        <h2>
+            Bienvenue chez Rust N Repair
+        </h2>
+
+        <p>
+            La passion automobile au service de votre véhicule.
+        </p>
+
     </div>
+
 
     <div class="grid">
+
         <div class="card">
-            <div class="service-icon">🔧</div>
-            <h3>Expertise</h3>
-            <p>Diagnostic et réparation réalisés avec sérieux et précision.</p>
+
+            <div class="service-icon">
+                🔧
+            </div>
+
+            <h3>
+                Expertise
+            </h3>
+
+            <p>
+                Diagnostic et réparation réalisés avec
+                sérieux et précision.
+            </p>
+
         </div>
+
+
         <div class="card">
-            <div class="service-icon">⚡</div>
-            <h3>Rapidité</h3>
-            <p>Nous faisons notre maximum pour vous restituer votre véhicule dans les meilleurs délais.</p>
+
+            <div class="service-icon">
+                ⚡
+            </div>
+
+            <h3>
+                Rapidité
+            </h3>
+
+            <p>
+                Nous faisons notre maximum pour vous
+                restituer votre véhicule dans les meilleurs délais.
+            </p>
+
         </div>
+
+
         <div class="card">
-            <div class="service-icon">❤️</div>
-            <h3>Passion</h3>
-            <p>Chaque véhicule est traité avec la même attention et la même passion.</p>
+
+            <div class="service-icon">
+                ❤️
+            </div>
+
+            <h3>
+                Passion
+            </h3>
+
+            <p>
+                Chaque véhicule est traité avec la même
+                attention et la même passion.
+            </p>
+
         </div>
+
     </div>
 
-    <div class="card" style="margin-top:15px;">
-        <h3>🕐 Horaires d'ouverture</h3>
-        <p contenteditable="false" class="editable" id="horairesText" style="margin-top:10px;">
+
+    <!-- HORAIRES -->
+
+    <div
+        class="card"
+        style="margin-top:15px;"
+    >
+
+        <h3>
+            🕐 Horaires d'ouverture
+        </h3>
+
+        <p
+            contenteditable="false"
+            class="editable"
+            id="horairesText"
+            style="margin-top:10px;"
+        >
             Lundi — Vendredi : 08h00 — 19h00<br>
             Samedi : 09h00 — 12h00<br>
             Dimanche : Fermé
         </p>
+
     </div>
+
 </section>
 
-<!-- SERVICES -->
+
+<!-- ================= SERVICES ================= -->
+
 <section id="services">
+
     <div class="section-heading">
-        <h2>Nos services</h2>
-        <p>Entretien, mécanique et réparation automobile.</p>
+
+        <h2>
+            Nos services
+        </h2>
+
+        <p>
+            Entretien, mécanique et réparation automobile.
+        </p>
+
     </div>
+
+
     <div class="grid">
+
+
         <div class="card">
-            <div class="service-icon">🧪</div>
-            <h3>Diagnostic électronique</h3>
-            <p>Lecture des calculateurs et recherche de pannes électroniques.</p>
-            <div class="price">À partir de 49 €</div>
+
+            <div class="service-icon">
+                🧪
+            </div>
+
+            <h3>
+                Diagnostic électronique
+            </h3>
+
+            <p>
+                Lecture des calculateurs et recherche
+                de pannes électroniques.
+            </p>
+
+            <div class="price">
+                À partir de 49 €
+            </div>
+
         </div>
+
+
         <div class="card">
-            <div class="service-icon">🛢️</div>
-            <h3>Vidange & filtres</h3>
-            <p>Remplacement de l'huile moteur et des principaux filtres.</p>
-            <div class="price">À partir de 89 €</div>
+
+            <div class="service-icon">
+                🛢️
+            </div>
+
+            <h3>
+                Vidange & filtres
+            </h3>
+
+            <p>
+                Remplacement de l'huile moteur et des
+                principaux filtres.
+            </p>
+
+            <div class="price">
+                À partir de 89 €
+            </div>
+
         </div>
+
+
         <div class="card">
-            <div class="service-icon">🛞</div>
-            <h3>Pneumatiques</h3>
-            <p>Montage, équilibrage et contrôle de vos pneus.</p>
-            <div class="price">Sur devis</div>
+
+            <div class="service-icon">
+                🛞
+            </div>
+
+            <h3>
+                Pneumatiques
+            </h3>
+
+            <p>
+                Montage, équilibrage et contrôle de vos pneus.
+            </p>
+
+            <div class="price">
+                Sur devis
+            </div>
+
         </div>
+
+
         <div class="card">
-            <div class="service-icon">🛑</div>
-            <h3>Freinage</h3>
-            <p>Plaquettes, disques et contrôle complet du système de freinage.</p>
-            <div class="price">Sur devis</div>
+
+            <div class="service-icon">
+                🛑
+            </div>
+
+            <h3>
+                Freinage
+            </h3>
+
+            <p>
+                Plaquettes, disques et contrôle complet
+                du système de freinage.
+            </p>
+
+            <div class="price">
+                Sur devis
+            </div>
+
         </div>
+
+
         <div class="card">
-            <div class="service-icon">⚙️</div>
-            <h3>Mécanique générale</h3>
-            <p>Réparation et remplacement de pièces mécaniques.</p>
-            <div class="price">Sur devis</div>
+
+            <div class="service-icon">
+                ⚙️
+            </div>
+
+            <h3>
+                Mécanique générale
+            </h3>
+
+            <p>
+                Réparation et remplacement de pièces
+                mécaniques.
+            </p>
+
+            <div class="price">
+                Sur devis
+            </div>
+
         </div>
+
+
         <div class="card">
-            <div class="service-icon">🎨</div>
-            <h3>Restauration</h3>
-            <p>Remise en état et restauration de véhicules anciens ou de collection.</p>
-            <div class="price">Sur devis</div>
+
+            <div class="service-icon">
+                🎨
+            </div>
+
+            <h3>
+                Restauration
+            </h3>
+
+            <p>
+                Remise en état et restauration de véhicules
+                anciens ou de collection.
+            </p>
+
+            <div class="price">
+                Sur devis
+            </div>
+
         </div>
+
+
     </div>
+
 </section>
 
-<!-- PHOTOS -->
+
+<!-- ================= PHOTOS ================= -->
+
 <section id="photos">
+
     <div class="section-heading">
-        <h2>Galerie</h2>
-        <p>Découvrez les dernières réalisations de Rust N Repair.</p>
+
+        <h2>
+            Galerie
+        </h2>
+
+        <p>
+            Découvrez les dernières réalisations de Rust N Repair.
+        </p>
+
     </div>
 
-    <div class="card" id="uploadZone" style="display:none; margin-bottom:20px;">
-        <h3>📸 Ajouter une réalisation</h3>
-        <p style="margin-top:5px; margin-bottom:18px;">Disponible pour les mécaniciens et le patron.</p>
+
+    <!-- UPLOAD PRO -->
+
+    <div
+        class="card"
+        id="uploadZone"
+        style="display:none; margin-bottom:20px;"
+    >
+
+        <h3>
+            📸 Ajouter une réalisation
+        </h3>
+
+        <p style="margin-top:5px; margin-bottom:18px;">
+            Disponible pour les mécaniciens et le patron.
+        </p>
+
+
         <div class="form-group">
-            <label>URL de l'image</label>
-            <input type="text" id="imgUrl" placeholder="https://exemple.com/photo.jpg">
+
+            <label>
+                URL de l'image
+            </label>
+
+            <input
+                type="text"
+                id="imgUrl"
+                placeholder="https://exemple.com/photo.jpg"
+            >
+
         </div>
+
+
         <div class="form-group">
-            <label>Description</label>
-            <input type="text" id="imgCaption" placeholder="Réfection moteur V8">
+
+            <label>
+                Description
+            </label>
+
+            <input
+                type="text"
+                id="imgCaption"
+                placeholder="Réfection moteur V8"
+            >
+
         </div>
-        <button class="btn btn-primary" onclick="addPhoto()">Publier la photo</button>
+
+
+        <button
+            class="btn btn-primary"
+            onclick="addPhoto()"
+        >
+            Publier la photo
+        </button>
+
     </div>
 
-    <div class="gallery-grid" id="galleryGrid">
+
+    <div
+        class="gallery-grid"
+        id="galleryGrid"
+    >
+
+
         <div class="gallery-item">
-            <img src="https://images.unsplash.com/photo-1486006920555-c77dce18193b?auto=format&fit=crop&w=800&q=85" alt="Atelier automobile">
-            <div class="gallery-caption">Maintenance complète</div>
+
+            <img
+                src="https://images.unsplash.com/photo-1486006920555-c77dce18193b?auto=format&fit=crop&w=800&q=85"
+                alt="Atelier automobile"
+            >
+
+            <div class="gallery-caption">
+                Maintenance complète
+            </div>
+
         </div>
+
+
         <div class="gallery-item">
-            <img src="https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=800&q=85" alt="Véhicule">
-            <div class="gallery-caption">Préparation véhicule</div>
+
+            <img
+                src="https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=800&q=85"
+                alt="Véhicule"
+            >
+
+            <div class="gallery-caption">
+                Préparation véhicule
+            </div>
+
         </div>
+
+
         <div class="gallery-item">
-            <img src="https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=800&q=85" alt="Voiture sportive">
-            <div class="gallery-caption">Contrôle mécanique</div>
+
+            <img
+                src="https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=800&q=85"
+                alt="Voiture sportive"
+            >
+
+            <div class="gallery-caption">
+                Contrôle mécanique
+            </div>
+
         </div>
+
+
         <div class="gallery-item">
-            <img src="https://images.unsplash.com/photo-1542282088-72c9c27ed0cd?auto=format&fit=crop&w=800&q=85" alt="Automobile">
-            <div class="gallery-caption">Intervention atelier</div>
+
+            <img
+                src="https://images.unsplash.com/photo-1542282088-72c9c27ed0cd?auto=format&fit=crop&w=800&q=85"
+                alt="Automobile"
+            >
+
+            <div class="gallery-caption">
+                Intervention atelier
+            </div>
+
         </div>
+
+
     </div>
+
 </section>
 
-<!-- TARIFS -->
+
+<!-- ================= TARIFS ================= -->
+
 <section id="tarifs">
+
     <div class="section-heading">
-        <h2>Nos tarifs</h2>
-        <p>Quelques prestations courantes.</p>
+
+        <h2>
+            Nos tarifs
+        </h2>
+
+        <p>
+            Quelques prestations courantes.
+        </p>
+
     </div>
-    <div class="grid" id="tarifsGrid">
+
+
+    <div
+        class="grid"
+        id="tarifsGrid"
+    >
+
+
         <div class="card">
-            <h3 contenteditable="false" class="editable">Diagnostic électronique</h3>
-            <p contenteditable="false" class="editable">Analyse complète des calculateurs et recherche de pannes.</p>
-            <div class="price editable" contenteditable="false">49 €</div>
+
+            <h3
+                contenteditable="false"
+                class="editable"
+            >
+                Diagnostic électronique
+            </h3>
+
+            <p
+                contenteditable="false"
+                class="editable"
+            >
+                Analyse complète des calculateurs
+                et recherche de pannes.
+            </p>
+
+            <div
+                class="price editable"
+                contenteditable="false"
+            >
+                49 €
+            </div>
+
         </div>
+
+
         <div class="card">
-            <h3 contenteditable="false" class="editable">Vidange & filtres</h3>
-            <p contenteditable="false" class="editable">Remplacement de l'huile moteur et du filtre.</p>
-            <div class="price editable" contenteditable="false">89 €</div>
+
+            <h3
+                contenteditable="false"
+                class="editable"
+            >
+                Vidange & filtres
+            </h3>
+
+            <p
+                contenteditable="false"
+                class="editable"
+            >
+                Remplacement de l'huile moteur
+                et du filtre.
+            </p>
+
+            <div
+                class="price editable"
+                contenteditable="false"
+            >
+                89 €
+            </div>
+
         </div>
+
+
         <div class="card">
-            <h3 contenteditable="false" class="editable">Contrôle freinage</h3>
-            <p contenteditable="false" class="editable">Vérification complète du système de freinage.</p>
-            <div class="price editable" contenteditable="false">39 €</div>
+
+            <h3
+                contenteditable="false"
+                class="editable"
+            >
+                Contrôle freinage
+            </h3>
+
+            <p
+                contenteditable="false"
+                class="editable"
+            >
+                Vérification complète du système
+                de freinage.
+            </p>
+
+            <div
+                class="price editable"
+                contenteditable="false"
+            >
+                39 €
+            </div>
+
         </div>
+
+
         <div class="card">
-            <h3 contenteditable="false" class="editable">Recharge climatisation</h3>
-            <p contenteditable="false" class="editable">Contrôle et recharge du système de climatisation.</p>
-            <div class="price editable" contenteditable="false">69 €</div>
+
+            <h3
+                contenteditable="false"
+                class="editable"
+            >
+                Recharge climatisation
+            </h3>
+
+            <p
+                contenteditable="false"
+                class="editable"
+            >
+                Contrôle et recharge du système de climatisation.
+            </p>
+
+            <div
+                class="price editable"
+                contenteditable="false"
+            >
+                69 €
+            </div>
+
         </div>
+
+
     </div>
+
 </section>
 
-<!-- FIDELITE -->
+
+<!-- ================= FIDELITE ================= -->
+
 <section id="fidelite">
+
     <div class="section-heading">
-        <h2>Programme fidélité</h2>
-        <p>Parce que nos clients méritent plus.</p>
+
+        <h2>
+            Programme fidélité
+        </h2>
+
+        <p>
+            Parce que nos clients méritent plus.
+        </p>
+
     </div>
-    <div class="card" style="background: linear-gradient(135deg, rgba(229,57,53,0.16), rgba(255,255,255,0.025));">
-        <div style="font-size:3rem; margin-bottom:15px;">⭐</div>
-        <h2>Carte Club Rust N Repair</h2>
-        <p style="margin-top:10px;">Cumulez des points à chaque passage dans notre atelier.</p>
-        <div class="grid" style="margin-top:25px;">
-            <div class="card">
-                <h3>💳 100 € dépensés</h3>
-                <p>Vous gagnez automatiquement des points fidélité.</p>
-            </div>
-            <div class="card">
-                <h3>🎁 10 € de remise</h3>
-                <p>Utilisez vos points sur votre prochaine prestation.</p>
-            </div>
+
+
+    <div
+        class="card"
+        style="
+            background:
+            linear-gradient(
+                135deg,
+                rgba(229,57,53,0.16),
+                rgba(255,255,255,0.025)
+            );
+        "
+    >
+
+        <div
+            style="
+                font-size:3rem;
+                margin-bottom:15px;
+            "
+        >
+            ⭐
         </div>
+
+        <h2>
+            Carte Club Rust N Repair
+        </h2>
+
+        <p style="margin-top:10px;">
+
+            Cumulez des points à chaque passage
+            dans notre atelier.
+
+        </p>
+
+
+        <div
+            class="grid"
+            style="margin-top:25px;"
+        >
+
+            <div class="card">
+
+                <h3>
+                    💳 100 € dépensés
+                </h3>
+
+                <p>
+                    Vous gagnez automatiquement
+                    des points fidélité.
+                </p>
+
+            </div>
+
+
+            <div class="card">
+
+                <h3>
+                    🎁 10 € de remise
+                </h3>
+
+                <p>
+                    Utilisez vos points sur votre
+                    prochaine prestation.
+                </p>
+
+            </div>
+
+        </div>
+
     </div>
+
 </section>
 
-<!-- RENDEZ-VOUS -->
+
+<!-- ================= RENDEZ-VOUS ================= -->
+
 <section id="rendezvous">
+
     <div class="section-heading">
-        <h2>Rendez-vous</h2>
-        <p>Demandez votre rendez-vous directement auprès du garage.</p>
+
+        <h2>
+            Rendez-vous
+        </h2>
+
+        <p>
+            Demandez votre rendez-vous directement auprès du garage.
+        </p>
+
     </div>
+
+
     <div class="grid">
+
+
         <div class="card">
-            <h3>📅 Demander un rendez-vous</h3>
-            <p style="margin-bottom:20px;">Remplissez les informations ci-dessous.</p>
+
+            <h3>
+                📅 Demander un rendez-vous
+            </h3>
+
+            <p style="margin-bottom:20px;">
+                Remplissez les informations ci-dessous.
+            </p>
+
+
             <div class="form-group">
-                <label>Nom</label>
-                <input type="text" id="rdvNom" placeholder="Votre nom">
+
+                <label>
+                    Nom
+                </label>
+
+                <input
+                    type="text"
+                    id="rdvNom"
+                    placeholder="Votre nom"
+                >
+
             </div>
+
+
             <div class="form-group">
-                <label>Véhicule</label>
-                <input type="text" id="rdvVehicule" placeholder="BMW M3, Audi A3...">
+
+                <label>
+                    Véhicule
+                </label>
+
+                <input
+                    type="text"
+                    id="rdvVehicule"
+                    placeholder="BMW M3, Audi A3..."
+                >
+
             </div>
+
+
             <div class="form-group">
-                <label>Prestation</label>
+
+                <label>
+                    Prestation
+                </label>
+
                 <select id="rdvService">
-                    <option value="Diagnostic">Diagnostic</option>
-                    <option value="Vidange">Vidange</option>
-                    <option value="Freinage">Freinage</option>
-                    <option value="Pneumatiques">Pneumatiques</option>
-                    <option value="Mécanique générale">Mécanique générale</option>
+
+                    <option value="Diagnostic">
+                        Diagnostic
+                    </option>
+
+                    <option value="Vidange">
+                        Vidange
+                    </option>
+
+                    <option value="Freinage">
+                        Freinage
+                    </option>
+
+                    <option value="Pneumatiques">
+                        Pneumatiques
+                    </option>
+
+                    <option value="Mécanique générale">
+                        Mécanique générale
+                    </option>
+
                 </select>
+
             </div>
+
             <div class="form-group">
-                <label>Date souhaitée</label>
-                <input type="date" id="rdvDate">
+
+                <label>
+                    Date souhaitée
+                </label>
+
+                <input
+                    type="date"
+                    id="rdvDate"
+                >
+
             </div>
-            <button class="btn btn-primary" onclick="submitRDV()" style="width: 100%;">Envoyer la demande</button>
+
+            <button
+                class="btn btn-primary"
+                onclick="submitRDV()"
+                style="width: 100%;"
+            >
+                Envoyer la demande
+            </button>
+
         </div>
+
     </div>
+
 </section>
 
-<!-- ESPACE CLIENT / PRO -->
+
+<!-- ================= ESPACE CLIENT / PRO ================= -->
+
 <section id="espace-client">
+
     <div class="section-heading">
-        <h2>Espace Personnel</h2>
-        <p>Gestion du compte et tableau de bord.</p>
+
+        <h2>
+            Espace Personnel
+        </h2>
+
+        <p>
+            Gestion du compte et tableau de bord.
+        </p>
+
     </div>
 
     <div class="card">
+
         <div class="profile-header">
-            <div class="avatar" id="userAvatar">👤</div>
-            <div>
-                <h3 id="userName">Non connecté</h3>
-                <span class="role-badge" id="userRole">Visiteur</span>
+
+            <div class="avatar" id="userAvatar">
+                👤
             </div>
+
+            <div>
+
+                <h3 id="userName">
+                    Non connecté
+                </h3>
+
+                <span class="role-badge" id="userRole">
+                    Visiteur
+                </span>
+
+            </div>
+
         </div>
 
+        <!-- ZONE COMPTE PATRON : CRÉER UN EMPLOYE -->
         <div id="patronControls" style="display: none; margin-bottom: 25px; padding-bottom: 20px; border-bottom: 1px solid var(--border);">
             <h3>👨‍🔧 Espace Patron — Gestion des employés</h3>
             <p style="margin-bottom: 15px;">Créez un compte d'accès pour un nouvel employé / mécanicien.</p>
@@ -506,138 +2156,222 @@ footer strong { color: white; }
             </div>
         </div>
 
-        <button class="btn btn-secondary" onclick="logout()" style="margin-top: 25px;">Déconnexion</button>
+        <button
+            class="btn btn-secondary"
+            onclick="logout()"
+            style="margin-top: 25px;"
+        >
+            Déconnexion
+        </button>
+
     </div>
+
 </section>
 
-<!-- CONTACT -->
+
+<!-- ================= CONTACT ================= -->
+
 <section id="contact">
+
     <div class="section-heading">
-        <h2>Contact & Localisation</h2>
-        <p>Passez au garage ou contactez-nous directement.</p>
+
+        <h2>
+            Contact & Localisation
+        </h2>
+
+        <p>
+            Passez au garage ou contactez-nous directement.
+        </p>
+
     </div>
+
     <div class="grid">
+
         <div class="card">
-            <h3>📍 Notre Adresse</h3>
-            <p style="margin-top: 10px;">Rust N Repair Garage<br>124 Avenue des Pignons<br>75000 Paris</p>
-            <h3 style="margin-top: 20px;">📞 Téléphone</h3>
-            <p style="margin-top: 10px;">01 23 45 67 89</p>
-            <h3 style="margin-top: 20px;">✉️ Email</h3>
-            <p style="margin-top: 10px;">contact@rustnrepair.fr</p>
+
+            <h3>
+                📍 Notre Adresse
+            </h3>
+
+            <p style="margin-top: 10px;">
+                Rust N Repair Garage<br>
+                124 Avenue des Pignons<br>
+                75000 Paris
+            </p>
+
+            <h3 style="margin-top: 20px;">
+                📞 Téléphone
+            </h3>
+
+            <p style="margin-top: 10px;">
+                01 23 45 67 89
+            </p>
+
+            <h3 style="margin-top: 20px;">
+                ✉️ Email
+            </h3>
+
+            <p style="margin-top: 10px;">
+                contact@rustnrepair.fr
+            </p>
+
         </div>
+
     </div>
+
 </section>
+
 
 </main>
 
 <!-- FOOTER -->
+
 <footer>
+
     <strong>Rust N Repair</strong> — Garage Automobile © 2026. Tous droits réservés.
+
 </footer>
 
-<!-- MODAL CONNEXION -->
-<div class="modal" id="loginModal">
-    <div class="modal-content">
-        <div class="modal-logo">Rust <span>N</span> Repair</div>
-        <div class="modal-subtitle">Connexion à l'espace membre / pro</div>
 
-        <div class="form-group">
-            <label>Identifiant</label>
-            <input type="text" id="loginUser" placeholder="Entrez votre identifiant">
+<!-- MODAL CONNEXION -->
+
+<div class="modal" id="loginModal">
+
+    <div class="modal-content">
+
+        <div class="modal-logo">
+            Rust <span>N</span> Repair
+        </div>
+
+        <div class="modal-subtitle">
+            Connexion à l'espace membre / pro
         </div>
 
         <div class="form-group">
+
+            <label>Identifiant</label>
+
+            <input
+                type="text"
+                id="loginUser"
+                placeholder="Entrez votre identifiant"
+            >
+
+        </div>
+
+        <div class="form-group">
+
             <label>Mot de passe</label>
-            <input type="password" id="loginPass" placeholder="••••••••">
+
+            <input
+                type="password"
+                id="loginPass"
+                placeholder="••••••••"
+            >
+
         </div>
 
         <div style="display: flex; gap: 10px; margin-top: 20px;">
-            <button class="btn btn-primary" onclick="handleLogin()" style="flex: 1;">Se connecter</button>
-            <button class="btn btn-secondary" onclick="closeLoginModal()">Annuler</button>
+
+            <button
+                class="btn btn-primary"
+                onclick="handleLogin()"
+                style="flex: 1;"
+            >
+                Se connecter
+            </button>
+
+            <button
+                class="btn btn-secondary"
+                onclick="closeLoginModal()"
+            >
+                Annuler
+            </button>
+
         </div>
+
     </div>
+
 </div>
 
+
 <!-- JAVASCRIPT LOGIC -->
+
 <script>
+
+// --- GESTION DES UTILISATEURS ---
 let currentUser = null;
 
-// Hachage sécurisé avec gestion automatique de secours
-async function hashSHA256(str) {
-    try {
-        if (window.crypto && window.crypto.subtle) {
-            const encoder = new TextEncoder();
-            const data = encoder.encode(str);
-            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-        }
-    } catch(e) { console.log("SubtleCrypto non supporté"); }
-    return null;
-}
-
+// --- INITIALISATION ---
 document.addEventListener("DOMContentLoaded", () => {
     loadSavedContent();
     checkSession();
 });
 
+// --- SIDEBAR ---
 function toggleSidebar() {
-    document.getElementById("sidebar").classList.toggle("open");
-    document.getElementById("overlay").classList.toggle("show");
+    const sidebar = document.getElementById("sidebar");
+    const overlay = document.getElementById("overlay");
+    sidebar.classList.toggle("open");
+    overlay.classList.toggle("show");
 }
 
+// --- NAVIGATION ---
 function showSection(sectionId, element) {
-    document.querySelectorAll("main section").forEach(sec => sec.classList.remove("active"));
+    document.querySelectorAll("main section").forEach(sec => {
+        sec.classList.remove("active");
+    });
+
     const targetSection = document.getElementById(sectionId);
-    if(targetSection) targetSection.classList.add("active");
+    if(targetSection) {
+        targetSection.classList.add("active");
+    }
 
     if(element) {
-        document.querySelectorAll(".nav-links a").forEach(link => link.classList.remove("active"));
+        document.querySelectorAll(".nav-links a").forEach(link => {
+            link.classList.remove("active");
+        });
         element.classList.add("active");
     }
 
-    if(document.getElementById("sidebar").classList.contains("open")) toggleSidebar();
+    const sidebar = document.getElementById("sidebar");
+    if(sidebar.classList.contains("open")) {
+        toggleSidebar();
+    }
 }
 
+// --- MODAL LOGIN ---
 function openLoginModal() {
-    if(currentUser) showSection('espace-client');
-    else document.getElementById("loginModal").classList.add("open");
+    if(currentUser) {
+        showSection('espace-client');
+    } else {
+        document.getElementById("loginModal").classList.add("open");
+    }
 }
 
 function closeLoginModal() {
     document.getElementById("loginModal").classList.remove("open");
 }
 
-async function handleLogin() {
+function handleLogin() {
     const userVal = document.getElementById("loginUser").value.trim().toLowerCase();
     const passVal = document.getElementById("loginPass").value.trim();
 
-    if(!userVal || !passVal) {
-        alert("Veuillez saisir des identifiants.");
-        return;
-    }
-
-    // 1. Empreintes HASH (pour le web sécurisé)
-    const PATRON_USER_HASH = "cfc51db3f0db6e35593874052309f3ed1b76e1f0eebc89d7b4db139b4f9104cc"; 
-    const PATRON_PASS_HASH = "238cc3239aeb9f27d35966d1235b2a095037d9934c9c228d9c6360cf2b634863";
-
-    const userHash = await hashSHA256(userVal);
-    const passHash = await hashSHA256(passVal);
-
-    // 2. Comptes employés créés dans le panneau
+    // Vérification des comptes créés par le patron
     const customAccounts = JSON.parse(localStorage.getItem("rnr_accounts") || "[]");
     const foundAcc = customAccounts.find(a => a.user.toLowerCase() === userVal && a.pass === passVal);
 
-    // 3. Vérification Hybride (Secours direct si en local)
-    const isPatronHash = (userHash === PATRON_USER_HASH && passHash === PATRON_PASS_HASH);
-    const isPatronDirect = (userVal === "patron" && passVal === "garage2026");
-
-    if (isPatronHash || isPatronDirect) {
-        currentUser = { name: "Patron", role: "PATRON" };
-    } else if(foundAcc) {
+    if(foundAcc) {
         currentUser = { name: foundAcc.user.charAt(0).toUpperCase() + foundAcc.user.slice(1), role: foundAcc.role };
-    } else {
+    } else if(userVal === "patron" && passVal === "admin") {
+        currentUser = { name: "Patron", role: "PATRON" };
+    } else if(userVal === "meca" && passVal === "meca") {
+        currentUser = { name: "Mécanicien", role: "MÉCANICIEN" };
+    } else if(userVal.length > 0) {
         currentUser = { name: userVal.charAt(0).toUpperCase() + userVal.slice(1), role: "CLIENT" };
+    } else {
+        alert("Veuillez saisir des identifiants.");
+        return;
     }
 
     localStorage.setItem("rnr_user", JSON.stringify(currentUser));
@@ -668,39 +2402,40 @@ function updateUI() {
     const patronControls = document.getElementById("patronControls");
 
     if(!currentUser) {
-        if(adminBanner) adminBanner.style.display = "none";
-        if(uploadZone) uploadZone.style.display = "none";
-        if(navClientLink) navClientLink.style.display = "none";
-        if(patronControls) patronControls.style.display = "none";
+        adminBanner.style.display = "none";
+        uploadZone.style.display = "none";
+        navClientLink.style.display = "none";
+        patronControls.style.display = "none";
         setEditable(false);
         return;
     }
 
-    if(navClientLink) navClientLink.style.display = "block";
+    navClientLink.style.display = "block";
     document.getElementById("userName").innerText = currentUser.name;
     document.getElementById("userRole").innerText = currentUser.role;
 
     if(currentUser.role === "PATRON") {
-        if(adminBanner) adminBanner.style.display = "block";
-        if(uploadZone) uploadZone.style.display = "block";
-        if(patronControls) patronControls.style.display = "block";
+        adminBanner.style.display = "block";
+        uploadZone.style.display = "block";
+        patronControls.style.display = "block";
         setEditable(true);
         renderEmployeeList();
     } else if(currentUser.role === "MÉCANICIEN") {
-        if(adminBanner) adminBanner.style.display = "none";
-        if(uploadZone) uploadZone.style.display = "block";
-        if(patronControls) patronControls.style.display = "none";
+        adminBanner.style.display = "none";
+        uploadZone.style.display = "block";
+        patronControls.style.display = "none";
         setEditable(false);
     } else {
-        if(adminBanner) adminBanner.style.display = "none";
-        if(uploadZone) uploadZone.style.display = "none";
-        if(patronControls) patronControls.style.display = "none";
+        adminBanner.style.display = "none";
+        uploadZone.style.display = "none";
+        patronControls.style.display = "none";
         setEditable(false);
     }
 
     renderAppointments();
 }
 
+// --- CREATION DE COMPTES EMPLOYE (PATRON) ---
 function createEmployeeAccount() {
     const user = document.getElementById("newEmpUser").value.trim();
     const pass = document.getElementById("newEmpPass").value.trim();
@@ -747,11 +2482,14 @@ function deleteAccount(index) {
     renderEmployeeList();
 }
 
+// --- EDITEUR PATRON ---
 function setEditable(enable) {
     const editables = document.querySelectorAll(".editable");
     editables.forEach(el => {
         el.setAttribute("contenteditable", enable ? "true" : "false");
-        if(enable) el.addEventListener("blur", saveContent);
+        if(enable) {
+            el.addEventListener("blur", saveContent);
+        }
     });
 }
 
@@ -759,8 +2497,11 @@ function saveContent() {
     const editables = document.querySelectorAll(".editable");
     const savedData = {};
     editables.forEach((el, index) => {
-        if(el.id) savedData[el.id] = el.innerHTML;
-        else savedData['edit_' + index] = el.innerHTML;
+        if(el.id) {
+            savedData[el.id] = el.innerHTML;
+        } else {
+            savedData['edit_' + index] = el.innerHTML;
+        }
     });
     localStorage.setItem("rnr_site_content", JSON.stringify(savedData));
 }
@@ -771,11 +2512,15 @@ function loadSavedContent() {
         const parsed = JSON.parse(savedData);
         const editables = document.querySelectorAll(".editable");
         editables.forEach((el, index) => {
-            if(el.id && parsed[el.id]) el.innerHTML = parsed[el.id];
-            else if(parsed['edit_' + index]) el.innerHTML = parsed['edit_' + index];
+            if(el.id && parsed[el.id]) {
+                el.innerHTML = parsed[el.id];
+            } else if(parsed['edit_' + index]) {
+                el.innerHTML = parsed['edit_' + index];
+            }
         });
     }
 
+    // Charger photos personnalisées
     const savedPhotos = localStorage.getItem("rnr_photos");
     if(savedPhotos) {
         const photos = JSON.parse(savedPhotos);
@@ -783,6 +2528,7 @@ function loadSavedContent() {
     }
 }
 
+// --- GALERIE PHOTO ---
 function addPhoto() {
     const url = document.getElementById("imgUrl").value.trim();
     const caption = document.getElementById("imgCaption").value.trim();
@@ -793,6 +2539,7 @@ function addPhoto() {
     }
 
     appendPhotoToGallery(url, caption);
+
     const savedPhotos = JSON.parse(localStorage.getItem("rnr_photos") || "[]");
     savedPhotos.push({ url, caption });
     localStorage.setItem("rnr_photos", JSON.stringify(savedPhotos));
@@ -805,10 +2552,14 @@ function appendPhotoToGallery(url, caption) {
     const grid = document.getElementById("galleryGrid");
     const item = document.createElement("div");
     item.className = "gallery-item";
-    item.innerHTML = `<img src="${url}" alt="${caption}"><div class="gallery-caption">${caption}</div>`;
+    item.innerHTML = `
+        <img src="${url}" alt="${caption}">
+        <div class="gallery-caption">${caption}</div>
+    `;
     grid.prepend(item);
 }
 
+// --- RENDEZ-VOUS ---
 function submitRDV() {
     const nom = document.getElementById("rdvNom").value.trim();
     const vehicule = document.getElementById("rdvVehicule").value.trim();
@@ -857,10 +2608,27 @@ function renderAppointments() {
                 </div>
                 
                 <div style="display: flex; align-items: center; gap: 10px;">
-                    <span class="status ${statusClass}">${rdv.status}</span>
+                    <span class="status ${statusClass}">
+                        ${rdv.status}
+                    </span>
+
                     ${isPro ? `
-                        <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.75rem;" onclick="updateRDVStatus(${index}, 'Validé')" title="Valider">✅</button>
-                        <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.75rem; color: var(--red);" onclick="deleteRDV(${index})" title="Supprimer">🗑️</button>
+                        <button 
+                            class="btn btn-secondary" 
+                            style="padding: 4px 8px; font-size: 0.75rem;" 
+                            onclick="updateRDVStatus(${index}, 'Validé')"
+                            title="Valider le rendez-vous"
+                        >
+                            ✅
+                        </button>
+                        <button 
+                            class="btn btn-secondary" 
+                            style="padding: 4px 8px; font-size: 0.75rem; color: var(--red);" 
+                            onclick="deleteRDV(${index})"
+                            title="Supprimer"
+                        >
+                            🗑️
+                        </button>
                     ` : ''}
                 </div>
             </div>
@@ -870,6 +2638,7 @@ function renderAppointments() {
 
 function updateRDVStatus(index, newStatus) {
     const rdvList = JSON.parse(localStorage.getItem("rnr_rdv") || "[]");
+    
     if (rdvList[index]) {
         rdvList[index].status = newStatus;
         localStorage.setItem("rnr_rdv", JSON.stringify(rdvList));
@@ -879,11 +2648,13 @@ function updateRDVStatus(index, newStatus) {
 
 function deleteRDV(index) {
     if (!confirm("Voulez-vous vraiment supprimer ce rendez-vous ?")) return;
+    
     let rdvList = JSON.parse(localStorage.getItem("rnr_rdv") || "[]");
     rdvList.splice(index, 1);
     localStorage.setItem("rnr_rdv", JSON.stringify(rdvList));
     renderAppointments();
 }
+
 </script>
 
 </body>
