@@ -86,7 +86,7 @@
         .btn { display: inline-block; width: 100%; padding: 0.85rem; background-color: var(--primary); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; text-align: center; }
         .btn-secondary { background-color: var(--bg-hover); color: var(--text-light); border: 1px solid var(--border-color); }
 
-        /* Sellers List (Style Caracas Motors) */
+        /* Sellers List */
         .sellers-list { list-style: none; margin-top: 1rem; }
         .seller-item { display: flex; justify-content: space-between; align-items: center; background: var(--bg-dark); border: 1px solid var(--border-color); padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 0.5rem; }
         .seller-grade { font-size: 0.75rem; padding: 0.2rem 0.5rem; border-radius: 4px; background: var(--bg-hover); color: var(--accent-yellow); font-weight: bold; }
@@ -180,14 +180,13 @@
             <button class="btn btn-secondary" id="addFideliteBtn" style="display:none; margin-top: 1rem;">➕ Ajouter une offre fidélité</button>
         </section>
 
-        <!-- ESPACE STAFF & ADMIN (Inspiré de Caracas Motors) -->
+        <!-- ESPACE STAFF & ADMIN -->
         <section id="staff" class="page-section">
             <div class="panel">
                 <h2>Espace Équipe & Administration</h2>
                 <p>Gestion interne des accès et rôles des employés du garage.</p>
             </div>
 
-            <!-- Espace Admin Patron (Création de compte) -->
             <div class="panel" id="adminCreatePanel" style="display: none; margin-top: 1rem;">
                 <h3>👑 Créer un compte Employé (Accès Patron)</h3>
                 <form id="createAccountForm" style="margin-top: 1rem;">
@@ -251,17 +250,28 @@
         </div>
     </div>
 
-    <script>
-        // Données Comptes (Identifiants préconfigurés)
-        let accounts = JSON.parse(localStorage.getItem('rust_accounts')) || [
-            { id: "patron", pass: "garage2026", nom: "Le Patron", grade: "patron", role: "patron" },
-            { id: "mecanicien1", pass: "rust123", nom: "Mécano 1", grade: "mecanicien", role: "pro" }
-        ];
+    <!-- Script FIREBASE (Base de Données en Direct) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        let currentUser = null;
+        const firebaseConfig = {
+            apiKey: "AIzaSyAU_viKfFXferYVeDowxL5Z7tbZc7VIJ1o",
+            authDomain: "rust-n-repair.firebaseapp.com",
+            projectId: "rust-n-repair",
+            storageBucket: "rust-n-repair.firebasestorage.app",
+            messagingSenderId: "793097914044",
+            appId: "1:793097914044:web:bcb48e194727868577f2b9"
+        };
 
-        // Données du Site
-        let siteData = JSON.parse(localStorage.getItem('rust_data')) || {
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Références Firebase
+        const dataDocRef = doc(db, "garage", "siteData");
+        const accountsDocRef = doc(db, "garage", "accounts");
+
+        let siteData = {
             homeTitle: "Bienvenue chez Rust N Repair",
             homeDesc: "Spécialiste de la réparation, restauration et préparation automobile haut de gamme.",
             tarifs: [
@@ -276,17 +286,42 @@
             ]
         };
 
-        function saveData() {
-            localStorage.setItem('rust_data', JSON.stringify(siteData));
-            localStorage.setItem('rust_accounts', JSON.stringify(accounts));
+        let accounts = [
+            { id: "boss", pass: "patron2026", nom: "Le Patron", grade: "patron", role: "patron" }
+        ];
+
+        let currentUser = JSON.parse(sessionStorage.getItem('rust_current_user')) || null;
+
+        async function syncToFirebase() {
+            await setDoc(dataDocRef, siteData);
+            await setDoc(accountsDocRef, { list: accounts });
         }
 
+        // Écoute des données en temps réel
+        onSnapshot(dataDocRef, (docSnap) => {
+            if (docSnap.exists()) {
+                siteData = docSnap.data();
+            } else {
+                syncToFirebase();
+            }
+            renderSite();
+        });
+
+        onSnapshot(accountsDocRef, (docSnap) => {
+            if (docSnap.exists()) {
+                accounts = docSnap.data().list || [];
+            } else {
+                syncToFirebase();
+            }
+            renderSite();
+        });
+
         function renderSite() {
-            document.getElementById('homeTitle').innerText = siteData.homeTitle;
-            document.getElementById('homeDesc').innerText = siteData.homeDesc;
+            document.getElementById('homeTitle').innerText = siteData.homeTitle || "Bienvenue chez Rust N Repair";
+            document.getElementById('homeDesc').innerText = siteData.homeDesc || "";
 
             // Tarifs
-            document.getElementById('tarifsGrid').innerHTML = siteData.tarifs.map((item, idx) => `
+            document.getElementById('tarifsGrid').innerHTML = (siteData.tarifs || []).map((item, idx) => `
                 <div class="card">
                     <h3 class="editable" data-type="tarifs" data-field="title" data-idx="${idx}">${item.title}</h3>
                     <p class="editable" data-type="tarifs" data-field="desc" data-idx="${idx}">${item.desc}</p>
@@ -295,7 +330,7 @@
             `).join('');
 
             // Fidélité
-            document.getElementById('fideliteGrid').innerHTML = siteData.fidelite.map((item, idx) => `
+            document.getElementById('fideliteGrid').innerHTML = (siteData.fidelite || []).map((item, idx) => `
                 <div class="card">
                     <h3 class="editable" data-type="fidelite" data-field="title" data-idx="${idx}">${item.title}</h3>
                     <p class="editable" data-type="fidelite" data-field="desc" data-idx="${idx}">${item.desc}</p>
@@ -303,14 +338,14 @@
             `).join('');
 
             // Galerie Photos
-            document.getElementById('galleryGrid').innerHTML = siteData.photos.map(p => `
+            document.getElementById('galleryGrid').innerHTML = (siteData.photos || []).map(p => `
                 <div class="gallery-item">
                     <img src="${p.url}" alt="${p.title}">
                     <div class="gallery-item-info"><p><strong>${p.title}</strong></p></div>
                 </div>
             `).join('');
 
-            // Liste des Comptes Staff
+            // Liste des Comptes
             document.getElementById('accountsList').innerHTML = accounts.map((acc, idx) => `
                 <li class="seller-item">
                     <div>
@@ -318,7 +353,7 @@
                     </div>
                     <div>
                         <span class="seller-grade">${acc.grade.toUpperCase()}</span>
-                        ${acc.grade !== 'patron' ? `<button onclick="deleteAccount(${idx})" style="background:none; border:none; color:var(--primary); cursor:pointer; margin-left:10px;">✕</button>` : ''}
+                        ${acc.grade !== 'patron' ? `<button onclick="window.deleteAccount(${idx})" style="background:none; border:none; color:var(--primary); cursor:pointer; margin-left:10px;">✕</button>` : ''}
                     </div>
                 </li>
             `).join('');
@@ -339,7 +374,6 @@
             document.getElementById('staffNavItem').style.display = isLogged ? 'block' : 'none';
             document.getElementById('adminCreatePanel').style.display = isPatron ? 'block' : 'none';
 
-            // Role Badge
             const badge = document.getElementById('roleBadge');
             if (isLogged) {
                 badge.style.display = 'inline-block';
@@ -349,7 +383,6 @@
                 badge.style.display = 'none';
             }
 
-            // Editable Elements
             document.querySelectorAll('.editable').forEach(el => {
                 el.contentEditable = isPatron ? "true" : "false";
                 if (isPatron) {
@@ -363,13 +396,13 @@
                         else if (type && field && idx !== null) {
                             siteData[type][idx][field] = el.innerText;
                         }
-                        saveData();
+                        syncToFirebase();
                     };
                 }
             });
         }
 
-        // Navigation & Modales
+        // Navigation
         const sidebar = document.getElementById('sidebar');
         const overlay = document.getElementById('sidebarOverlay');
         document.getElementById('openMenuBtn').onclick = () => { sidebar.classList.add('active'); overlay.classList.add('active'); };
@@ -400,6 +433,7 @@
             const user = accounts.find(a => a.id.toLowerCase() === id.toLowerCase() && a.pass === pass);
             if (user) {
                 currentUser = user;
+                sessionStorage.setItem('rust_current_user', JSON.stringify(user));
                 document.getElementById('loginForm').style.display = 'none';
                 document.getElementById('logoutSection').style.display = 'block';
                 document.getElementById('connectedUserText').innerText = `Connecté : ${user.nom} (${user.grade})`;
@@ -413,13 +447,22 @@
 
         document.getElementById('logoutBtn').onclick = () => {
             currentUser = null;
+            sessionStorage.removeItem('rust_current_user');
             document.getElementById('loginForm').style.display = 'block';
             document.getElementById('logoutSection').style.display = 'none';
             document.getElementById('userBtn').classList.remove('logged-in');
             renderSite();
         };
 
-        // Créer un compte employé (Patron)
+        // Supprimer un compte
+        window.deleteAccount = function(idx) {
+            if (confirm('Supprimer ce compte employé ?')) {
+                accounts.splice(idx, 1);
+                syncToFirebase();
+            }
+        };
+
+        // Créer un compte employé
         document.getElementById('createAccountForm').onsubmit = (e) => {
             e.preventDefault();
             const newAcc = {
@@ -427,49 +470,46 @@
                 pass: document.getElementById('newPassword').value.trim(),
                 nom: document.getElementById('newNom').value.trim(),
                 grade: document.getElementById('newGrade').value,
-                role: "pro"
+                role: document.getElementById('newGrade').value === 'co-patron' ? 'patron' : 'pro'
             };
             accounts.push(newAcc);
-            saveData();
-            renderSite();
+            syncToFirebase();
             e.target.reset();
-            alert('Nouveau compte créé avec succès !');
+            alert('Nouveau compte créé et sauvegardé dans la base !');
         };
-
-        function deleteAccount(idx) {
-            if (confirm('Supprimer ce compte employé ?')) {
-                accounts.splice(idx, 1);
-                saveData();
-                renderSite();
-            }
-        }
 
         // Publier Photo
         document.getElementById('photoForm').onsubmit = (e) => {
             e.preventDefault();
+            if(!siteData.photos) siteData.photos = [];
             siteData.photos.unshift({
                 url: document.getElementById('photoUrl').value.trim(),
                 title: document.getElementById('photoTitle').value.trim()
             });
-            saveData();
-            renderSite();
+            syncToFirebase();
             e.target.reset();
         };
 
         // Ajout Prestations
         document.getElementById('addTarifBtn').onclick = () => {
+            if(!siteData.tarifs) siteData.tarifs = [];
             siteData.tarifs.push({ title: "Nouvelle Prestation", desc: "Description du service", price: "0 €" });
-            saveData();
-            renderSite();
+            syncToFirebase();
         };
 
         document.getElementById('addFideliteBtn').onclick = () => {
+            if(!siteData.fidelite) siteData.fidelite = [];
             siteData.fidelite.push({ title: "Nouvel Avantage", desc: "Description de l'offre" });
-            saveData();
-            renderSite();
+            syncToFirebase();
         };
 
-        renderSite();
+        // Auto-connexion si déjà en session
+        if (currentUser) {
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('logoutSection').style.display = 'block';
+            document.getElementById('connectedUserText').innerText = `Connecté : ${currentUser.nom} (${currentUser.grade})`;
+            document.getElementById('userBtn').classList.add('logged-in');
+        }
     </script>
 </body>
 </html>
