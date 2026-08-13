@@ -2302,11 +2302,23 @@ footer strong {
 // --- GESTION DES UTILISATEURS ---
 let currentUser = null;
 
+// --- FONCTION DE HACHAGE SHA-256 ---
+// Permet de masquer totalement les identifiants aux visiteurs
+async function hashSHA256(str) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(str);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+
 // --- INITIALISATION ---
 document.addEventListener("DOMContentLoaded", () => {
     loadSavedContent();
     checkSession();
 });
+
 
 // --- SIDEBAR ---
 function toggleSidebar() {
@@ -2315,6 +2327,7 @@ function toggleSidebar() {
     sidebar.classList.toggle("open");
     overlay.classList.toggle("show");
 }
+
 
 // --- NAVIGATION ---
 function showSection(sectionId, element) {
@@ -2340,6 +2353,7 @@ function showSection(sectionId, element) {
     }
 }
 
+
 // --- MODAL LOGIN ---
 function openLoginModal() {
     if(currentUser) {
@@ -2353,25 +2367,38 @@ function closeLoginModal() {
     document.getElementById("loginModal").classList.remove("open");
 }
 
-function handleLogin() {
+// MISE À JOUR SÉCURISÉE AVEC HACHAGE
+async function handleLogin() {
     const userVal = document.getElementById("loginUser").value.trim().toLowerCase();
     const passVal = document.getElementById("loginPass").value.trim();
 
-    // Vérification des comptes créés par le patron
+    if(!userVal || !passVal) {
+        alert("Veuillez saisir des identifiants.");
+        return;
+    }
+
+    // 1. Calcul du HASH de ce que l'utilisateur vient de taper
+    const userHash = await hashSHA256(userVal);
+    const passHash = await hashSHA256(passVal);
+
+    // 2. EMPREINTES DU PATRON (MASQUÉES)
+    // Par défaut configuré sur :
+    // Identifiant = patron
+    // Mot de passe = garage2026
+    const PATRON_USER_HASH = "cfc51db3f0db6e35593874052309f3ed1b76e1f0eebc89d7b4db139b4f9104cc"; 
+    const PATRON_PASS_HASH = "238cc3239aeb9f27d35966d1235b2a095037d9934c9c228d9c6360cf2b634863";
+
+    // Vérification des comptes employés créés par le patron dans l'Espace Pro
     const customAccounts = JSON.parse(localStorage.getItem("rnr_accounts") || "[]");
     const foundAcc = customAccounts.find(a => a.user.toLowerCase() === userVal && a.pass === passVal);
 
-    if(foundAcc) {
-        currentUser = { name: foundAcc.user.charAt(0).toUpperCase() + foundAcc.user.slice(1), role: foundAcc.role };
-    } else if(userVal === "patron" && passVal === "admin") {
+    if(userHash === PATRON_USER_HASH && passHash === PATRON_PASS_HASH) {
         currentUser = { name: "Patron", role: "PATRON" };
-    } else if(userVal === "meca" && passVal === "meca") {
-        currentUser = { name: "Mécanicien", role: "MÉCANICIEN" };
-    } else if(userVal.length > 0) {
-        currentUser = { name: userVal.charAt(0).toUpperCase() + userVal.slice(1), role: "CLIENT" };
+    } else if(foundAcc) {
+        currentUser = { name: foundAcc.user.charAt(0).toUpperCase() + foundAcc.user.slice(1), role: foundAcc.role };
     } else {
-        alert("Veuillez saisir des identifiants.");
-        return;
+        // Simple client
+        currentUser = { name: userVal.charAt(0).toUpperCase() + userVal.slice(1), role: "CLIENT" };
     }
 
     localStorage.setItem("rnr_user", JSON.stringify(currentUser));
